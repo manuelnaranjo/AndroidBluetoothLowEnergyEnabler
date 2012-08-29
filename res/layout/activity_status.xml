@@ -1,0 +1,123 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <TextView
+        android:id="@+id/labelInstalledAPI"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="@dimen/padding_small"
+        android:layout_marginTop="@dimen/padding_small"
+        android:text="@string/installed_api_version" />
+
+    <Button
+        android:id="@+id/btnUninstall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/btnInstall"
+        android:layout_alignParentBottom="true"
+        android:layout_alignRight="@+id/btnInstall"
+        android:text="@string/uninstall" />
+
+    <Button
+        android:id="@+id/btnInstall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/btnUninstall"
+        android:layout_alignLeft="@+id/logLayout"
+        android:layout_alignRight="@+id/logLayout"
+        android:text="@string/install" />
+
+    <TextView
+        android:id="@+id/labelProvidedAPI"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/labelInstalledAPI"
+        android:layout_below="@+id/labelInstalledAPI"
+        android:text="@string/provided_api_version" />
+
+    <TextView
+        android:id="@+id/labelInstalledVersion"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/labelProvidedAPI"
+        android:layout_below="@+id/labelProvidedAPI"
+        android:text="@string/installed_version" />
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/labelInstalledVersion"
+        android:layout_below="@+id/labelInstalledVersion"
+        android:text="@string/provided_version" />
+
+    <TextView
+        android:id="@+id/txtSystemReady"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/textView1"
+        android:layout_below="@+id/textView1"
+        android:text="" />
+
+    <TextView
+        android:id="@+id/labelLog"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/txtSystemReady"
+        android:layout_below="@+id/txtSystemReady"
+        android:text="@string/log" />
+
+    <ScrollView
+        android:id="@+id/logLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/btnInstall"
+        android:layout_alignLeft="@+id/labelLog"
+        android:layout_below="@+id/labelLog" >
+
+        <TextView
+            android:id="@+id/txtLog"
+            android:layout_width="306dp"
+            android:layout_height="wrap_content"
+            android:text="" />
+    </ScrollView>
+
+    <TextView
+        android:id="@+id/txtInstalledAPIVer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/labelProvidedAPI"
+        android:layout_marginLeft="@dimen/padding_small"
+        android:layout_marginRight="@dimen/padding_small"
+        android:layout_toRightOf="@+id/textView1"
+        android:text="@string/nd" />
+
+    <TextView
+        android:id="@+id/txtProvidedAPIVer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/labelInstalledVersion"
+        android:layout_alignLeft="@+id/txtInstalledAPIVer"
+        android:text="@string/current_api_version" />
+
+    <TextView
+        android:id="@+id/txtInstalledFrameworkVer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/textView1"
+        android:layout_alignLeft="@+id/txtProvidedAPIVer"
+        android:text="" />
+
+    <TextView
+        android:id="@+id/txtProvidedFrameworkVer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/txtSystemReady"
+        android:layout_alignLeft="@+id/txtInstalledFrameworkVer"
+        android:text="@string/current_framework_version" />
+
+</RelativeLayout>

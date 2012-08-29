@@ -1,0 +1,27 @@
+<resources>
+    
+    <string name="app_name">Bluetooth Smart</string>
+    <string name="title_activity_status">BTLE Status</string>
+    <string name="installed_version">Installed Version:</string>
+    <string name="nd">ND</string>
+    <string name="provided_version">Provided Version:</string>
+    
+    <string name="current_api_version">5</string>
+    <string name="current_framework_version">0.5.0</string>
+    
+    <string name="not_installed">Not Installed</string>
+    <string name="no_api_level">No API Level</string>
+    <string name="no_framework_version">No Framework Version</string>
+    <string name="api_level_invocation">API Level Invocation Failed</string>
+    <string name="framework_version_invocation">Framework Version Invocation Failed</string>
+    <string name="system_ready"></string>
+    <string name="system_ok">Ready to Install</string>
+    <string name="root_required">Root is Required</string>
+    <string name="root_not_available">Root not Available</string>
+    <string name="install">Install</string>
+    <string name="uninstall">Uninstall</string>
+    <string name="log">Log:</string>
+    <string name="installed_api_version">Installed API:</string>
+    <string name="provided_api_version">Provided API:</string>
+
+</resources>

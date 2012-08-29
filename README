@@ -1,0 +1,6 @@
+Open Bluetooth Low Energy SDK for Android Implementation Installer
+===================================================================
+
+This project provides an interactive self-contained installer for the project.
+It will keep track of installations and uninstallations, requires rooting.
+
