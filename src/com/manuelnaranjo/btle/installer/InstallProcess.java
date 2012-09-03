@@ -10,9 +10,13 @@ import com.stericson.RootTools.RootTools;
 import com.stericson.RootTools.Shell;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class InstallProcess extends Thread {
     private InstallerListener mListener;
@@ -21,6 +25,7 @@ public class InstallProcess extends Thread {
     
     static final String WRAPPER_NAME="netd";
     static final String WRAPPER_PATH="/system/bin/netd";
+    static final String MAIN_CONF="/system/etc/bluetooth/main.conf";
     static final String FRAMEWORK_PATH="/system/framework/btle-framework.jar";
     static final String PERM_PATH="/system/etc/permissions/com.manuelnaranjo.broadcom.bt.le.xml";
     static final String LAUNCH_PATH="/system/bin/btle-framework";
@@ -40,9 +45,7 @@ public class InstallProcess extends Thread {
                 e.printStackTrace();
             }
         }
-        
         RootTools.remount("/system", "RO");
-        
     }
     
     private boolean chmod(String path, String perm){
@@ -190,6 +193,104 @@ public class InstallProcess extends Thread {
         return true;
 
     }
+    
+    private static final Pattern ENABLE_LE_PATTERN = Pattern.compile(
+            "EnableLE\\s*=\\s*(\\S*)\\s*");
+    private boolean updateMainConf(){
+        boolean ret;
+        Context c;
+        
+        c=mListener.getApplicationContext();
+        ret = RootTools.copyFile(MAIN_CONF, mPath + "/main.conf", true, false);
+        
+        if (!ret){
+            mListener.addToLog("Failed to copy main.conf for verification");
+            return false;
+        }
+        
+        mListener.addToLog("Copied main.conf");
+        
+        File f = new File(mPath + "/main.conf");
+        
+        int i = 0, lineToUpdate = -1;
+        StringBuilder text = new StringBuilder();
+
+        
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(f));
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                text.append(line);
+                text.append('\n');
+                Matcher m = ENABLE_LE_PATTERN.matcher(line);
+                if (m!=null && m.find()){
+                    String l = m.group(0);
+                    if (l.toLowerCase().equals("true"))
+                        lineToUpdate = i;
+                }
+                i++;
+            }
+            br.close();
+        }
+        catch (IOException e) {
+            Log.e(TAG, "failed to read main.conf", e);
+            mListener.addToLog("Failed to read main.conf");
+            return false;
+        }
+        
+        if (lineToUpdate < 0){
+            mListener.addToLog("No need to update main.conf");
+            return true;
+        }
+        
+        try {
+            BufferedWriter bw = new BufferedWriter(new FileWriter(f));
+            i = 0;
+            for (String line: text.toString().split("\n")){
+                if (i!=lineToUpdate){
+                    bw.write(line);
+                } else {
+                    bw.write("EnableLE = true");
+                }
+                i++;
+            }
+            bw.close();
+        } catch (IOException e){
+            Log.e(TAG, "creating new main.conf", e);
+            mListener.addToLog("Failed while updating main.conf");
+            return false;
+        }
+        
+        ret = RootTools.copyFile(MAIN_CONF,
+                MAIN_CONF + ".orig", true, true);
+        
+        if (!ret){
+            mListener.addToLog("Failed to make main.conf backup");
+            return false;
+        }
+        
+        ret = chmod (mPath+"/main.conf", "644");
+        if (!ret){
+            mListener.addToLog("Failed to set main.conf permissions");
+            return false;
+        }
+        
+        ret = chown (mPath+"/main.conf", "root:root");
+        if (!ret){
+            mListener.addToLog("Failed to change owner");
+            return false;
+        }
+        
+        ret = RootTools.copyFile(mPath+"/main.conf", MAIN_CONF,
+                true, true);
+        if (!ret){
+            mListener.addToLog("Failed to update main.conf");
+            return false;
+        }
+        
+        return true;
+    }
 
     public void run() {
         Context c;
@@ -213,6 +314,13 @@ public class InstallProcess extends Thread {
             return;
         }
         mListener.addToLog("Installed framework");
+        
+        if (!this.updateMainConf()){
+            cleanup();
+            return;
+        }
+        
+        mListener.addToLog("Updated main.conf");
         
         fname = "com.manuelnaranjo.android.bluetooth.le.xml";
         if (!this.installBinary(R.raw.android_bluetooth_le, fname, PERM_PATH, "0644")){

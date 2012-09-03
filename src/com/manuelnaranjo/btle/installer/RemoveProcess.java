@@ -45,6 +45,15 @@ public class RemoveProcess extends Thread {
                 mListener.addToLog("Recovered original");
             }
         }
+        
+        if (new File(InstallProcess.MAIN_CONF+".orig").exists()){
+            if (!RootTools.copyFile(InstallProcess.MAIN_CONF+".orig",
+                    InstallProcess.MAIN_CONF, true, true)){
+                mListener.addToLog("Failed to recover main.conf backup");
+            } else {
+                mListener.addToLog("Recovered main.conf");
+            }
+        }
 
         switch (removeFile(WRAPPER_PATH+".orig")){
             case 0:
@@ -76,6 +85,14 @@ public class RemoveProcess extends Thread {
                 break;
             default:
                 mListener.addToLog("Failed removing launcher");
+        }
+        
+        switch (removeFile(InstallProcess.MAIN_CONF+".orig")){
+            case 0:
+                mListener.addToLog("Removed main.conf backup");
+                break;
+            default:
+                mListener.addToLog("Failed removing backup of main.conf");
         }
         
         RootTools.remount("/system", "RO");
