@@ -12,6 +12,7 @@ import java.io.File;
 public class RemoveProcess extends Thread {
     private static final String WRAPPER_PATH = InstallProcess.WRAPPER_PATH;
     private InstallerListener mListener;
+    private static final String TAG = StatusActivity.TAG;
     
     public RemoveProcess(InstallerListener l) {
         mListener = l;
@@ -29,7 +30,7 @@ public class RemoveProcess extends Thread {
                 return 1;
             }
         } catch (Exception e) {
-            Log.e(StatusActivity.TAG, "rm error", e);
+            Log.e(TAG, "rm error", e);
         }
         return 2;
     }

@@ -17,6 +17,7 @@ import java.io.IOException;
 public class InstallProcess extends Thread {
     private InstallerListener mListener;
     private String mPath = null;
+    private static final String TAG = StatusActivity.TAG;
     
     static final String WRAPPER_NAME="netd";
     static final String WRAPPER_PATH="/system/bin/netd";
@@ -55,7 +56,7 @@ public class InstallProcess extends Thread {
             return true;
         } catch (Exception e){
             this.mListener.addToLog("Error while doing chmod: " + e.getMessage());
-            Log.e(StatusActivity.TAG, "error on chmod", e);
+            Log.e(TAG, "error on chmod", e);
         }
         return false;
     }
@@ -75,7 +76,7 @@ public class InstallProcess extends Thread {
             out = new String(t, 0, l);
         } catch (IOException e){
             this.mListener.addToLog("Failed to read " + path);
-            Log.e(StatusActivity.TAG, "failed to read", e);
+            Log.e(TAG, "failed to read", e);
         }
         
         return out;
@@ -131,7 +132,7 @@ public class InstallProcess extends Thread {
                 return false;
             }
         } catch (Exception e) {
-            Log.e(StatusActivity.TAG, "faield to do chown", e);
+            Log.e(TAG, "faield to do chown", e);
             mListener.addToLog("Exception during chown");
             return false;
         }
@@ -177,9 +178,8 @@ public class InstallProcess extends Thread {
     }
 
     public void run() {
-        boolean ret;
         Context c;
-        String fname, ipath;
+        String fname;
         
         RootTools.debugMode = true;
         
@@ -187,7 +187,7 @@ public class InstallProcess extends Thread {
         try {
             mPath = c.getFilesDir().getCanonicalPath();
         } catch (IOException e) {
-           Log.e(StatusActivity.TAG, "failed to get canonical path", e);
+           Log.e(TAG, "failed to get canonical path", e);
            mListener.addToLog("failed to get canonical path");
            return;
         }
@@ -215,7 +215,7 @@ public class InstallProcess extends Thread {
         mListener.addToLog("Installed btle-framework launcher");
         
         String fheader = getFileHeader(WRAPPER_PATH, SH_HEAD.length());
-        Log.v(StatusActivity.TAG, "got file header " + fheader);
+        Log.v(TAG, "got file header " + fheader);
         if (!SH_HEAD.equals(fheader)){
             if (!processWrapper(c)){
                 cleanup();
@@ -232,7 +232,7 @@ public class InstallProcess extends Thread {
             }
         } catch (Exception e) {
             mListener.addToLog("WARN: failed to update dalvik cache");
-            Log.e(StatusActivity.TAG, "failed to update dalvik cache", e);
+            Log.e(TAG, "failed to update dalvik cache", e);
             cleanup();
             return;
         } 
