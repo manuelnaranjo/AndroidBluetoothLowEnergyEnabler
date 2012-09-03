@@ -276,7 +276,7 @@ public class InstallProcess extends Thread {
             return false;
         }
         
-        ret = chmod (mPath+"/main.conf", "644");
+        ret = chmod (mPath+"/main.conf", "666");
         if (!ret){
             mListener.addToLog("Failed to set main.conf permissions");
             return false;
