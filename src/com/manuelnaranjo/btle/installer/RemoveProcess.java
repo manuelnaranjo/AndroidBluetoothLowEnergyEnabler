@@ -10,6 +10,7 @@ import com.stericson.RootTools.RootTools;
 import java.io.File;
 
 public class RemoveProcess extends Thread {
+    private static final String WRAPPER_PATH = InstallProcess.WRAPPER_PATH;
     private InstallerListener mListener;
     
     public RemoveProcess(InstallerListener l) {
@@ -36,15 +37,15 @@ public class RemoveProcess extends Thread {
     public void run() {
         RootTools.debugMode = true;
         
-        if (new File("/system/bin/dbus-daemon.orig").exists()){
-            if (!RootTools.copyFile("/system/bin/dbus-daemon.orig", "/system/bin/dbus-daemon", true, true)){
+        if (new File(WRAPPER_PATH+".orig").exists()){
+            if (!RootTools.copyFile(WRAPPER_PATH+".orig", WRAPPER_PATH, true, true)){
                 mListener.addToLog("Failed to overwrite wrapper with original");
             } else {
                 mListener.addToLog("Recovered original");
             }
         }
 
-        switch (removeFile("/system/bin/dbus-daemon.orig")){
+        switch (removeFile(WRAPPER_PATH+".orig")){
             case 0:
                 mListener.addToLog("Removed wrapper completely");
                 break;
@@ -67,6 +68,15 @@ public class RemoveProcess extends Thread {
             default:
                 mListener.addToLog("Failed removing permissions");
         }
+        
+        switch (removeFile(InstallProcess.LAUNCH_PATH)){
+            case 0:
+                mListener.addToLog("Removed launcher completely");
+                break;
+            default:
+                mListener.addToLog("Failed removing launcher");
+        }
+        
         RootTools.remount("/system", "RO");
         mListener.addToLog("Framework removed");
         mListener.addToLog("It's better if you restart your cellphone");
