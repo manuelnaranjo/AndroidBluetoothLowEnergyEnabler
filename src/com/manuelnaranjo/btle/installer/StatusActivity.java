@@ -13,12 +13,10 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.broadcom.bt.le.api.BleAdapter;
 import com.stericson.RootTools.Command;
 import com.stericson.RootTools.CommandCapture;
 import com.stericson.RootTools.RootTools;
-
-import java.io.IOException;
-import java.lang.reflect.Method;
 
 public class StatusActivity extends Activity implements InstallerListener {
     static final String TAG = "BTLE-Status";
@@ -52,90 +50,26 @@ public class StatusActivity extends Activity implements InstallerListener {
     public String getInstalledAPIVersionNumber() {
         Log.i(TAG, "getting installed api version number");
 
-        Class<?> bleAdapter;
-        try {
-            bleAdapter = Class.forName("com.broadcom.bt.le.api.BleAdapter");
-        } catch (ClassNotFoundException e) {
-            Log.e(TAG, "didn't find bleadapter", e);
-            mTxtLog.append("bleadapter not provided\n");
-            return getResources().getString(R.string.not_installed);
+        try{
+            return Integer.toString(BleAdapter.getApiLevel());
+        } catch (RuntimeException e){
+            Log.e(TAG, "failed recovering api level", e);
+            mTxtLog.append("API not installed, reason: " + e.getMessage() + "\n");
         }
-
-        Log.i(TAG, "got library");
-
-        Method apiLevelMethod;
-
-        try {
-            apiLevelMethod = bleAdapter.getMethod("getApiLevel", (Class<?>[]) null);
-        } catch (NoSuchMethodException e) {
-            Log.e(TAG, "no api level", e);
-            mTxtLog.append("no api level\n");
-            return getResources().getString(R.string.no_api_level);
-        }
-
-        Log.i(TAG, "got method");
-
-        Object apiLevelObject;
-
-        try {
-            apiLevelObject = apiLevelMethod.invoke(null, (Object[]) null);
-        } catch (Exception e) {
-            Log.e(TAG, "failed to get API level", e);
-            mTxtLog.append("failed to get API level\n");
-            return getResources().getString(R.string.api_level_invocation);
-        }
-
-        Log.i(TAG, "invoked method: " + apiLevelObject);
-
-        int apiLevel = ((Integer) apiLevelObject).intValue();
-
-        Log.i(TAG, "installed api level: " + apiLevel);
-        mTxtLog.append("found api level: " + apiLevel + "\n");
-
-        mInstalled = true;
-
-        return Integer.toString(apiLevel);
+        return getResources().getString(R.string.no_api_level);
     }
     
     public String getInstalledFrameworkVersionNumber() {
         Log.i(TAG, "getting installed framework version number");
 
-        Class<?> bleAdapter;
-        try {
-            bleAdapter = Class.forName("com.broadcom.bt.le.api.BleAdapter");
-        } catch (ClassNotFoundException e) {
-            Log.e(TAG, "didn't find bleadapter", e);
-            mTxtLog.append("bleadapter not provided\n");
-            return getResources().getString(R.string.not_installed);
+        try{
+            String o = BleAdapter.getFrameworkVersion();
+            mInstalled = true;
+            return o;
+        } catch (RuntimeException e){
+            Log.e(TAG, "failed recovering version number", e);
         }
-
-        Log.i(TAG, "got library");
-
-        Method frameworkVersionMethod;
-
-        try {
-            frameworkVersionMethod = bleAdapter.getMethod("getFrameworkVersion", (Class<?>[]) null);
-        } catch (NoSuchMethodException e) {
-            Log.e(TAG, "no framework version", e);
-            mTxtLog.append("no framework version\n");
-            return getResources().getString(R.string.no_framework_version);
-        }
-
-        Log.i(TAG, "got method");
-
-        Object frameworkVersionObject;
-
-        try {
-            frameworkVersionObject = frameworkVersionMethod.invoke(null, (Object[]) null);
-        } catch (Exception e) {
-            Log.e(TAG, "failed to get framework version", e);
-            mTxtLog.append("failed to get framework version\n");
-            return getResources().getString(R.string.framework_version_invocation);
-        }
-
-        Log.i(TAG, "invoked method: " + frameworkVersionObject);
-
-        return (String)frameworkVersionObject;
+        return getResources().getString(R.string.no_framework_version);
     }
 
     @Override
