@@ -45,18 +45,37 @@ public class InstallProcess extends Thread {
         
     }
     
-    public boolean chmod(String path, String perm){
+    private boolean chmod(String path, String perm){
         try{
             RootTools.remount("/system", "RW");
             Command cmd = RootTools.getShell(true).add(
-                    new CommandCapture(0, "chmod " + perm +" " + path));
+                    new CommandCapture(0, "chmod " + perm + " " + path));
             RootTools.remount("/system", "RO");
             if (cmd.exitCode()!= 0)
-                throw new RuntimeException("file: " + path + ", exit code: " + cmd.exitCode());
+                throw new RuntimeException("file: " + path + 
+                        ", exit code: " + cmd.exitCode());
             return true;
         } catch (Exception e){
-            this.mListener.addToLog("Error while doing chmod: " + e.getMessage());
+            this.mListener.addToLog("Error while doing chmod: " + 
+                        e.getMessage());
             Log.e(TAG, "error on chmod", e);
+        }
+        return false;
+    }
+    
+    private boolean chown(String path, String perm){
+        try{
+            RootTools.remount(path, "RW");
+            Command cmd = RootTools.getShell(true).add(
+                    new CommandCapture(0, "chown " + perm +" " + path));
+            if (cmd.exitCode()!= 0)
+                throw new RuntimeException("file: " + path + 
+                        ", exit code: " + cmd.exitCode());
+            return true;
+        } catch (Exception e){
+            this.mListener.addToLog("Error while doing chown: " + 
+                    e.getMessage());
+            Log.e(TAG, "error on chown", e);
         }
         return false;
     }
@@ -126,16 +145,11 @@ public class InstallProcess extends Thread {
         String oid = t[1];
         String gid = t[2];
         
-        try {
-            if (s.add(new CommandCapture(0, "chown " + oid + ":" + gid + " " + ipath )).exitCode()!=0){
-                mListener.addToLog("Failed to set wrapper owner");
-                return false;
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "faield to do chown", e);
-            mListener.addToLog("Exception during chown");
+        if (!chown(ipath, oid+":"+gid)){
+            mListener.addToLog("Failed to change wrapper owner");
             return false;
         }
+        
         mListener.addToLog("chown of wrapper succesful");
         
         ret = RootTools.copyFile(ipath, WRAPPER_PATH, true, true);
@@ -163,9 +177,9 @@ public class InstallProcess extends Thread {
         
         String ipath;
         ipath = mPath+File.separator+resname;
-        //if (!chmod(ipath, perm)) {
-        //    return false;
-        //}
+        if (!chmod(ipath, perm)) {
+            return false;
+        }
         
         ret = RootTools.copyFile(ipath, target, true, true);
         if (!ret){
