@@ -226,10 +226,15 @@ public class InstallProcess extends Thread {
                 Matcher m = ENABLE_LE_PATTERN.matcher(line);
                 if (m!=null && m.find()){
                     String l = m.group(0);
-                    if (l.toLowerCase().equals("true"))
+                    if (!l.toLowerCase().equals("true"))
                         lineToUpdate = i;
                 }
                 i++;
+            }
+            if (br.readLine()==null && lineToUpdate == -1){
+                mListener.addToLog("Couldn't find EnableLE line, adding at the end");
+                text.append("EnableLE = true\n");
+                lineToUpdate = i;
             }
             br.close();
         }
@@ -253,6 +258,7 @@ public class InstallProcess extends Thread {
                 } else {
                     bw.write("EnableLE = true");
                 }
+                bw.write("\n");
                 i++;
             }
             bw.close();
@@ -276,7 +282,7 @@ public class InstallProcess extends Thread {
             return false;
         }
         
-        ret = chown (mPath+"/main.conf", "root:root");
+        ret = chown (mPath+"/main.conf", "0:0");
         if (!ret){
             mListener.addToLog("Failed to change owner");
             return false;
