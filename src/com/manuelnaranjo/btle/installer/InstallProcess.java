@@ -18,8 +18,11 @@ public class InstallProcess extends Thread {
     private InstallerListener mListener;
     private String mPath = null;
     
+    static final String WRAPPER_NAME="netd";
+    static final String WRAPPER_PATH="/system/bin/netd";
     static final String FRAMEWORK_PATH="/system/framework/btle-framework.jar";
     static final String PERM_PATH="/system/etc/permissions/com.manuelnaranjo.broadcom.bt.le.xml";
+    static final String LAUNCH_PATH="/system/bin/btle-framework";
     private static final String SH_HEAD="#!/system/bin/sh";
 
     public InstallProcess(InstallerListener l) {
@@ -43,8 +46,10 @@ public class InstallProcess extends Thread {
     
     public boolean chmod(String path, String perm){
         try{
+            RootTools.remount("/system", "RW");
             Command cmd = RootTools.getShell(true).add(
                     new CommandCapture(0, "chmod " + perm +" " + path));
+            RootTools.remount("/system", "RO");
             if (cmd.exitCode()!= 0)
                 throw new RuntimeException("file: " + path + ", exit code: " + cmd.exitCode());
             return true;
@@ -76,22 +81,23 @@ public class InstallProcess extends Thread {
         return out;
     }
     
-    public boolean processDbusDaemon(Context c){
-        if (!RootTools.copyFile("/system/bin/dbus-daemon", "/system/bin/dbus-daemon.orig", true, true)){
-            mListener.addToLog("Failed to copy dbus-daemon");
+    public boolean processWrapper(Context c){
+        if (!RootTools.copyFile(WRAPPER_PATH, 
+                WRAPPER_PATH + ".orig", true, true)){
+            mListener.addToLog("Failed to copy wrapper exe");
             return false;
         }
-        mListener.addToLog("copied dbus-daemon");
+        mListener.addToLog("backed up wrapper");
         
         boolean ret;
-        ret = RootTools.installBinary(c, R.raw.dbus_daemon, "dbus-daemon");
+        ret = RootTools.installBinary(c, R.raw.wrapper, WRAPPER_NAME, "0755");
         if (!ret){
-            mListener.addToLog("failed to extract dbus-daemon replacement");
+            mListener.addToLog("failed to extract wrapper replacement");
             return false;
         }
         
-        String ipath = mPath + File.separator + "dbus-daemon";
-        mListener.addToLog("extracted dbus-daemon wrapper");
+        String ipath = mPath + File.separator + WRAPPER_NAME;
+        mListener.addToLog("extracted wrapper");
         
         Shell s = null;
         try {
@@ -103,29 +109,17 @@ public class InstallProcess extends Thread {
         mListener.addToLog("got rooted shell");
         
         CommandCapture cmd;
-        cmd = new CommandCapture(0, "ls -n /system/bin/dbus-daemon");
+        cmd = new CommandCapture(0, "ls -n " + WRAPPER_PATH);
         try {
             if (s.add(cmd).exitCode()!=0){
-                mListener.addToLog("Failed to get dbus-daemon owner");
+                mListener.addToLog("Failed to get wrapper owner");
                 return false;
             }
         } catch (Exception e){
-            mListener.addToLog("Failed to run ls on dbus-daemon");
+            mListener.addToLog("Failed to run ls on wrapper");
             return false;
         }
-        mListener.addToLog("got dbus-daemon owner");
-        
-        try {
-            if (s.add(new CommandCapture(0, "chmod 0755 " + ipath )).exitCode()!=0){
-                mListener.addToLog("Failed to set wrapper permissions");
-                return false;
-            }
-        } catch (Exception e) {
-            Log.e(StatusActivity.TAG, "faield to do chmod", e);
-            mListener.addToLog("Exception during chmod");
-            return false;
-        }
-        mListener.addToLog("chmod of wrapper succesful");
+        mListener.addToLog("got wrapper owner");
         
         String[] t = cmd.toString().split("[ ]+");
         String oid = t[1];
@@ -143,9 +137,9 @@ public class InstallProcess extends Thread {
         }
         mListener.addToLog("chown of wrapper succesful");
         
-        ret = RootTools.copyFile(ipath, "/system/bin/dbus-daemon", true, true);
+        ret = RootTools.copyFile(ipath, WRAPPER_PATH, true, true);
         if (!ret){
-            mListener.addToLog("Failed to overwrite dbus-daemon with wrapper");
+            mListener.addToLog("Failed to overwriter original with wrapper");
             return false;
         }
                 
@@ -158,7 +152,7 @@ public class InstallProcess extends Thread {
         Context c;
         c=mListener.getApplicationContext();
         
-        ret = RootTools.installBinary(c, src, resname);
+        ret = RootTools.installBinary(c, src, resname, perm);
         if (!ret){
             mListener.addToLog("Failed to extract resource " + resname);
             return false;
@@ -168,11 +162,11 @@ public class InstallProcess extends Thread {
         
         String ipath;
         ipath = mPath+File.separator+resname;
-        if (!chmod(ipath, perm)) {
-            return false;
-        }
+        //if (!chmod(ipath, perm)) {
+        //    return false;
+        //}
         
-        ret = RootTools.copyFile(ipath, target, true, false);
+        ret = RootTools.copyFile(ipath, target, true, true);
         if (!ret){
             mListener.addToLog("Failed to copy framework into " + target);
             return false;
@@ -200,28 +194,35 @@ public class InstallProcess extends Thread {
         
         fname = "btle-framework-" + c.getString(R.string.current_framework_version) + ".jar";
         
-        if (!this.installBinary(R.raw.btle_framework, fname, FRAMEWORK_PATH, "644")){
+        if (!this.installBinary(R.raw.btle_framework, fname, FRAMEWORK_PATH, "0644")){
             cleanup();
             return;
         }
         mListener.addToLog("Installed framework");
         
         fname = "com.manuelnaranjo.android.bluetooth.le.xml";
-        if (!this.installBinary(R.raw.android_bluetooth_le, fname, PERM_PATH, "644")){
+        if (!this.installBinary(R.raw.android_bluetooth_le, fname, PERM_PATH, "0644")){
             cleanup();
             return;
         }
         mListener.addToLog("Installed permission");
         
-        String fheader = getFileHeader("/system/bin/dbus-daemon", SH_HEAD.length());
+        fname = "btle-framework";
+        if (!this.installBinary(R.raw.btle_framework_script, fname, LAUNCH_PATH, "0755")){
+            cleanup();
+            return;
+        }
+        mListener.addToLog("Installed btle-framework launcher");
+        
+        String fheader = getFileHeader(WRAPPER_PATH, SH_HEAD.length());
         Log.v(StatusActivity.TAG, "got file header " + fheader);
         if (!SH_HEAD.equals(fheader)){
-            if (!processDbusDaemon(c)){
+            if (!processWrapper(c)){
                 cleanup();
             }
         }
         
-        CommandCapture cmd = new CommandCapture(0, "/system/bin/dbus-daemon --version");
+        CommandCapture cmd = new CommandCapture(0, "/system/bin/btle-framework --version");
         try {
             RootTools.getShell(true).add(cmd).waitForFinish();
             if (cmd.exitCode()!=0){
