@@ -7,7 +7,7 @@
     <string name="provided_version">Provided Version:</string>
     
     <string name="current_api_version">5</string>
-    <string name="current_framework_version">0.5.1</string>
+    <string name="current_framework_version">0.5.2</string>
     
     <string name="not_installed">Not Installed</string>
     <string name="no_api_level">No API Level</string>
