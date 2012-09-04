@@ -132,12 +132,20 @@ public class StatusActivity extends Activity implements InstallerListener {
     }
     
     public void updateValues(){
-        mTxtInstalledAPIVersion.setText(getInstalledAPIVersionNumber());
-        mTxtInstalledFrameworkVersion.setText(getInstalledFrameworkVersionNumber());
-        mTxtSystemReady.setText(testRoot());
+        this.runOnUiThread(new Runnable() {
 
-        mBtnInstall.setEnabled(mRootReady);
-        mBtnUninstall.setEnabled(mRootReady && mInstalled);
+            @Override
+            public void run() {
+                mTxtInstalledAPIVersion.setText(getInstalledAPIVersionNumber());
+                mTxtInstalledFrameworkVersion.setText(getInstalledFrameworkVersionNumber());
+                mTxtSystemReady.setText(testRoot());
+
+                mBtnInstall.setEnabled(mRootReady);
+                mBtnUninstall.setEnabled(mRootReady && mInstalled);
+            }
+
+        });
+        
     }
 
     @Override
