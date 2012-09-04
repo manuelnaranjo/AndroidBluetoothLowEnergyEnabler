@@ -83,7 +83,7 @@ public class InstallProcess extends Thread {
         return false;
     }
     
-    public String getFileHeader(String path, int max_length){
+    private String getFileHeader(String path, int max_length){
         String out = null;
         
         File f = new File(path);
@@ -104,7 +104,7 @@ public class InstallProcess extends Thread {
         return out;
     }
     
-    public boolean processWrapper(Context c){
+    private boolean processWrapper(Context c){
         if (!RootTools.copyFile(WRAPPER_PATH, 
                 WRAPPER_PATH + ".orig", true, true)){
             mListener.addToLog("Failed to copy wrapper exe");
@@ -165,7 +165,7 @@ public class InstallProcess extends Thread {
         return true;
     }
     
-    public boolean installBinary(int src, String resname, String target, String perm){
+    private boolean installBinary(int src, String resname, String target, String perm){
         boolean ret;
         Context c;
         c=mListener.getApplicationContext();
@@ -196,15 +196,19 @@ public class InstallProcess extends Thread {
     
     private static final Pattern ENABLE_LE_PATTERN = Pattern.compile(
             "EnableLE\\s*=\\s*(\\S*)\\s*");
+
     private boolean updateMainConf(){
         boolean ret;
-        Context c;
-        
-        c=mListener.getApplicationContext();
+               
         ret = RootTools.copyFile(MAIN_CONF, mPath + "/main.conf", true, false);
         
         if (!ret){
             mListener.addToLog("Failed to copy main.conf for verification");
+            return false;
+        }
+        
+        if (!chmod(mPath+"/main.conf", "666")){
+            mListener.addToLog("Failed to set proper permissions to main.conf copy");
             return false;
         }
         
@@ -214,7 +218,6 @@ public class InstallProcess extends Thread {
         
         int i = 0, lineToUpdate = -1;
         StringBuilder text = new StringBuilder();
-
         
         try {
             BufferedReader br = new BufferedReader(new FileReader(f));
@@ -276,7 +279,7 @@ public class InstallProcess extends Thread {
             return false;
         }
         
-        ret = chmod (mPath+"/main.conf", "666");
+        ret = chmod (mPath+"/main.conf", "200");
         if (!ret){
             mListener.addToLog("Failed to set main.conf permissions");
             return false;
@@ -320,6 +323,13 @@ public class InstallProcess extends Thread {
             return;
         }
         mListener.addToLog("Installed framework");
+        
+        if (!RootTools.findBinary(MAIN_CONF)){
+            if (!this.installBinary(R.raw.main_conf, "main.conf", MAIN_CONF, "0200")){
+                cleanup();
+                return;
+            }
+        }
         
         if (!this.updateMainConf()){
             cleanup();

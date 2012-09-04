@@ -1,0 +1,5 @@
+[General]
+
+# this file is provided by btle-installer
+
+EnableLE = true
