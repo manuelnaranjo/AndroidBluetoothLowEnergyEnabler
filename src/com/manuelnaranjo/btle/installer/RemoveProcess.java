@@ -98,6 +98,7 @@ public class RemoveProcess extends Thread {
         RootTools.remount("/system", "RO");
         mListener.addToLog("Framework removed");
         mListener.addToLog("It's better if you restart your cellphone");
+        mListener.updateValues();
         mListener.reboot();
     }
 }

@@ -7,4 +7,5 @@ interface InstallerListener {
     public void addToLog(String t);
     public void reboot();
     public Context getApplicationContext();
+    public void updateValues();
 }

@@ -120,7 +120,10 @@ public class StatusActivity extends Activity implements InstallerListener {
     @Override
     protected void onResume() {
         super.onResume();
-
+        updateValues();
+    }
+    
+    public void updateValues(){
         mTxtInstalledAPIVersion.setText(getInstalledAPIVersionNumber());
         mTxtInstalledFrameworkVersion.setText(getInstalledFrameworkVersionNumber());
         mTxtSystemReady.setText(testRoot());
