@@ -4,6 +4,8 @@ package com.manuelnaranjo.btle.installer;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -102,7 +104,6 @@ public class StatusActivity extends Activity implements InstallerListener {
                 addToLog("Starting installation");
                 p.start();
             }
-
         });
         
         mBtnUninstall.setOnClickListener(new OnClickListener() {
@@ -113,14 +114,21 @@ public class StatusActivity extends Activity implements InstallerListener {
                 addToLog("Removing installation");
                 p.start();
             }
-
         });
+        
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         updateValues();
+    }
+    
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        //setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
     }
     
     public void updateValues(){
