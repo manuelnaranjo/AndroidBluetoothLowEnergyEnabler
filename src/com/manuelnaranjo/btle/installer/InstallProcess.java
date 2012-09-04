@@ -377,6 +377,7 @@ public class InstallProcess extends Thread {
         
         mListener.addToLog("Installation done");
         mListener.addToLog("It's better if you restart your cellphone");
+        mListener.updateValues();
         mListener.reboot();
         cleanup();
     }
