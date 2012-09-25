@@ -207,7 +207,7 @@ public class InstallProcess extends Thread {
             return false;
         }
         
-        if (!chmod(mPath+"/main.conf", "666")){
+        if (!chmod(mPath+"/main.conf", "0666")){
             mListener.addToLog("Failed to set proper permissions to main.conf copy");
             return false;
         }
@@ -228,9 +228,11 @@ public class InstallProcess extends Thread {
                 text.append('\n');
                 Matcher m = ENABLE_LE_PATTERN.matcher(line);
                 if (m!=null && m.find()){
-                    String l = m.group(0);
+                    String l = m.group(1);
                     if (!l.toLowerCase().equals("true"))
                         lineToUpdate = i;
+                    else
+                        lineToUpdate = -2;
                 }
                 i++;
             }
@@ -279,7 +281,7 @@ public class InstallProcess extends Thread {
             return false;
         }
         
-        ret = chmod (mPath+"/main.conf", "200");
+        ret = chmod (mPath+"/main.conf", "0222");
         if (!ret){
             mListener.addToLog("Failed to set main.conf permissions");
             return false;
@@ -324,8 +326,8 @@ public class InstallProcess extends Thread {
         }
         mListener.addToLog("Installed framework");
         
-        if (!RootTools.findBinary(MAIN_CONF)){
-            if (!this.installBinary(R.raw.main_conf, "main.conf", MAIN_CONF, "0200")){
+        if (!RootTools.exists(MAIN_CONF)){
+            if (!this.installBinary(R.raw.main_conf, "main.conf", MAIN_CONF, "0222")){
                 cleanup();
                 return;
             }
