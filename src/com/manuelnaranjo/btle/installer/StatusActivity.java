@@ -4,6 +4,7 @@ package com.manuelnaranjo.btle.installer;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -27,9 +28,30 @@ public class StatusActivity extends Activity implements InstallerListener {
             mTxtSystemReady, mTxtInstalledFrameworkVersion,
             mTxtProvidedFrameworkVersion, mTxtLog;
     private Button mBtnInstall, mBtnUninstall;
+    
+    private static final int RESULT_BUSYBOX=1;
 
     private boolean mRootReady = false;
     private boolean mInstalled = false;
+
+    
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == RESULT_BUSYBOX){
+            Log.v(TAG, "Got result from busybox installation " + resultCode);
+            if (resultCode == RESULT_OK){
+                Log.v(TAG, "Busybox was installed");
+                updateValues();
+            } else {
+                Log.v(TAG, "failed to install busybox");
+                Toast.makeText(getApplicationContext(), 
+                        getResources().getString(R.string.busybox_required), 
+                        Toast.LENGTH_LONG).show();
+            }
+            return;
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+    }
 
     public String testRoot() {
         if (!RootTools.isRootAvailable()) {
@@ -42,6 +64,13 @@ public class StatusActivity extends Activity implements InstallerListener {
             Log.e(TAG, "root not given");
             mTxtLog.append("root not granted\n");
             return getResources().getString(R.string.root_required);
+        }
+        
+        if (!RootTools.isBusyboxAvailable()){
+            Log.e(TAG, "no busybox");
+            mTxtLog.append("no busybox available\n");
+            RootTools.offerBusyBox(this, RESULT_BUSYBOX);
+            return getResources().getString(R.string.busybox_required);
         }
 
         mTxtLog.append("root ready\n");
