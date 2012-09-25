@@ -23,5 +23,5 @@
     <string name="log">Log:</string>
     <string name="installed_api_version">Installed API:</string>
     <string name="provided_api_version">Provided API:</string>
-
+    <string name="busybox_required">BusyBox is required for this app to work, please install it</string>
 </resources>
