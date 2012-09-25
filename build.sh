@@ -36,4 +36,4 @@ sed -s "s/_API_VERSION_/${API_VERSION}/g" strings.xml | \
     sed "s/_FRAMEWORK_VERSION_/${FRAMEWORK_VERSION}/g" \
     > res/values/strings.xml
 
-exec ant debug
+ant debug
