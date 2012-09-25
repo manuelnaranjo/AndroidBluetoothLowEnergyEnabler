@@ -1,6 +1,9 @@
 #!/system/bin/sh
 
 export CLASSPATH="/system/framework/btle-framework.jar"
+
+alias ps="busybox ps"
+alias grep="busybox grep"
 	
 while [ ! -e ${CLASSPATH} ]; do
 	echo "Waiting for /system/framework to be ready"
