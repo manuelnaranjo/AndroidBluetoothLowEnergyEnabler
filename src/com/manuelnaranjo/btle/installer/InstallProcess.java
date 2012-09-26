@@ -15,6 +15,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -281,7 +282,7 @@ public class InstallProcess extends Thread {
             return false;
         }
         
-        ret = chmod (mPath+"/main.conf", "0222");
+        ret = chmod (mPath+"/main.conf", "0444");
         if (!ret){
             mListener.addToLog("Failed to set main.conf permissions");
             return false;
@@ -302,12 +303,41 @@ public class InstallProcess extends Thread {
         
         return true;
     }
+    
+    private boolean setMainConfPermissions(){
+        boolean ret = chmod (MAIN_CONF, "0444");
+        if (!ret){
+            mListener.addToLog("Failed to set main.conf permissions");
+            return false;
+        }
+        
+        ret = chown (MAIN_CONF, "0:0");
+        if (!ret){
+            mListener.addToLog("Failed to change owner");
+            return false;
+        }
+        
+        mListener.addToLog("Fixed main.conf permissions");
+        
+        return true;
+    }
 
     public void run() {
         Context c;
         String fname;
         
+
         RootTools.debugMode = true;
+        
+        List<String> applets;
+        try {
+            applets = RootTools.getBusyBoxApplets("/system/xbin");
+            for (String s: applets)
+                Log.v(TAG, "provides applet " + s);
+        } catch (Exception e1) {
+            Log.e(TAG, "error", e1);
+        }
+        
         
         c = mListener.getApplicationContext();
         try {
@@ -327,13 +357,18 @@ public class InstallProcess extends Thread {
         mListener.addToLog("Installed framework");
         
         if (!RootTools.exists(MAIN_CONF)){
-            if (!this.installBinary(R.raw.main_conf, "main.conf", MAIN_CONF, "0222")){
+            if (!this.installBinary(R.raw.main_conf, "main.conf", MAIN_CONF, "0444")){
                 cleanup();
                 return;
             }
         }
         
         if (!this.updateMainConf()){
+            cleanup();
+            return;
+        }
+        
+        if (!this.setMainConfPermissions()){
             cleanup();
             return;
         }
