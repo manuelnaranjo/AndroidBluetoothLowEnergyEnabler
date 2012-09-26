@@ -29,4 +29,5 @@ while [ 1 ]; do
 	if [ $? -eq 0 ]; then
 		exit 0
 	fi
+    sleep 1
 done
