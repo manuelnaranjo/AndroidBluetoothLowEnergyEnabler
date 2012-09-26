@@ -37,9 +37,10 @@ public class InstallProcess extends Thread {
         mListener.clearLog();
     }
     
+    
     private void cleanup(){
         if (mPath!=null){
-            CommandCapture cmd = new CommandCapture(0, "rm -rf " + mPath + File.separator + "*");
+            CommandCapture cmd = new CommandCapture(0, "busybox rm -rf " + mPath + File.separator + "*");
             try {
                 RootTools.getShell(true).add(cmd).waitForFinish();
             } catch (Exception e) {
