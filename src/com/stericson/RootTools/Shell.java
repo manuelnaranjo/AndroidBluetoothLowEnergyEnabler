@@ -97,7 +97,7 @@ public class Shell {
 	
 	public static Shell startRootShell() throws IOException, TimeoutException {
 		if (rootShell == null) {
-			RootTools.log("Starting Root Shell!");
+			//RootTools.log("Starting Root Shell!");
 			String cmd = "su";
 			// keep prompting the user until they accept, we hit 10 retries, or
 			// the attempt fails quickly
@@ -116,7 +116,7 @@ public class Shell {
 		}
 		else
 		{
-			RootTools.log("Using Existing Root Shell!");
+			//RootTools.log("Using Existing Root Shell!");
 		}
 		
 		return rootShell;

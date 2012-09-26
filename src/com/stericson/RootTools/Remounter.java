@@ -62,7 +62,7 @@ class Remounter {
         while (!foundMount) {
             try {
                 for (Mount mount : RootTools.getMounts()) {
-                    RootTools.log(mount.getMountPoint().toString());
+                    //RootTools.log(mount.getMountPoint().toString());
 
                     if (file.equals(mount.getMountPoint().toString())) {
                         foundMount = true;
