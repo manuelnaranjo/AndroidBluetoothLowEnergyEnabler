@@ -30,13 +30,16 @@ public class InstallProcess extends Thread {
     static final String FRAMEWORK_PATH="/system/framework/btle-framework.jar";
     static final String PERM_PATH="/system/etc/permissions/com.manuelnaranjo.broadcom.bt.le.xml";
     static final String LAUNCH_PATH="/system/bin/btle-framework";
+    
+    static final String GATTTOOL="gatttool-btle";
+    static final String HCITOOL="hcitool-btle";
+    
     private static final String SH_HEAD="#!/system/bin/sh";
 
     public InstallProcess(InstallerListener l) {
         mListener = l;
         mListener.clearLog();
     }
-    
     
     private void cleanup(){
         if (mPath!=null){
@@ -322,6 +325,36 @@ public class InstallProcess extends Thread {
         
         return true;
     }
+    
+    private boolean installBinaryExecutable(Context context, String name, String oname){
+    	String libraryPath = context.getApplicationInfo().dataDir + "/lib";
+    	String soPath = new File(libraryPath, "lib"+name+".so").getAbsolutePath();
+    	
+    	if (!new File(soPath).canRead()){
+    		mListener.addToLog("Can't find: " + soPath );
+    		return false;
+    	}
+  
+    	boolean ret = RootTools.copyFile(soPath, oname, true, true);
+    	
+    	if (!ret){
+    		mListener.addToLog("Failed to copy " + soPath + " to " + oname);
+    		return false;
+    	}
+    	
+    	if (!chown(oname, "0:0")){
+    		mListener.addToLog("Failed to set owner for " + oname);
+    		return false;
+    	}
+    	
+    	if (!chmod(oname, "777")){
+    		mListener.addToLog("Failed to set permissions for " + oname);
+    		return false;
+    	}
+    	
+    	mListener.addToLog(name + " installed correctly");
+    	return true;
+    }
 
     public void run() {
         Context c;
@@ -356,6 +389,16 @@ public class InstallProcess extends Thread {
             return;
         }
         mListener.addToLog("Installed framework");
+        
+        if (!this.installBinaryExecutable(c, GATTTOOL, "/system/bin/" + GATTTOOL)){
+        	cleanup();
+        	return;
+        }
+        
+        if (!this.installBinaryExecutable(c, HCITOOL, "/system/bin/" + HCITOOL)){
+        	cleanup();
+        	return;
+        }
         
         if (!RootTools.exists(MAIN_CONF)){
             if (!this.installBinary(R.raw.main_conf, "main.conf", MAIN_CONF, "0444")){
