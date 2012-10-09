@@ -1,0 +1,3 @@
+In order to fill the folders armeabi, armeabiv7 and mips you need to build the
+project: https://github.com/android-btle/bluez-tools with ndk-build, then run
+the script update-tools <path-to-bluez-tools-clone>
