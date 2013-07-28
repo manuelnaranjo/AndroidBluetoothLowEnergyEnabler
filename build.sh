@@ -27,7 +27,8 @@ popd
 cp ${AOSP}/out/target/product/maguro/system/framework/btle-framework.jar \
     res/raw/btle_framework.jar
 
-rm -f libs/btle/framework-*.jar
+rm -f libs/btle_framework*.jar
+rm -f libs/btle-framework*.jar
 
 cp ${AOSP}/out/target/common/obj/JAVA_LIBRARIES/btle-api_intermediates/javalib.jar \
     libs/btle-framework-${FRAMEWORK_VERSION}.jar
