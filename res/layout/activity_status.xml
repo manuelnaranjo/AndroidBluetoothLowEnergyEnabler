@@ -4,15 +4,40 @@
     android:layout_height="match_parent" >
 
     <TextView
-        android:id="@+id/labelInstalledAPI"
+        android:id="@+id/labelDeviceModel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentLeft="true"
         android:layout_alignParentTop="true"
         android:layout_marginLeft="@dimen/padding_small"
         android:layout_marginTop="@dimen/padding_small"
-        android:text="@string/installed_api_version" />
+        android:text="@string/device_board" />
 
+    <TextView
+        android:id="@+id/contentDeviceModel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/padding_small"
+        android:layout_marginTop="@dimen/padding_small"
+        android:text="@string/device_board" />
+
+    <ScrollView
+        android:id="@+id/logLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/btnInstall"
+        android:layout_alignLeft="@+id/labelLog"
+        android:layout_below="@+id/labelLog"
+        android:layout_marginRight="@dimen/padding_small" >
+
+        <TextView
+            android:id="@+id/txtLog"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="" />
+    </ScrollView>
+
+    
     <Button
         android:id="@+id/btnUninstall"
         android:layout_width="wrap_content"
@@ -28,96 +53,58 @@
         android:layout_height="wrap_content"
         android:layout_above="@+id/btnUninstall"
         android:layout_alignLeft="@+id/logLayout"
-        android:layout_alignRight="@+id/logLayout"
-        android:text="@string/install" />
+        android:layout_alignParentRight="true"
+        android:text="@string/install" 
+        android:layout_marginRight="@dimen/padding_small"/>
 
     <TextView
-        android:id="@+id/labelProvidedAPI"
+        android:id="@+id/labelApiStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/labelInstalledAPI"
-        android:layout_below="@+id/labelInstalledAPI"
-        android:text="@string/provided_api_version" />
+        android:layout_alignLeft="@+id/labelDeviceModel"
+        android:layout_below="@+id/labelDeviceModel"
+        android:text="@string/api_status" />
 
     <TextView
-        android:id="@+id/labelInstalledVersion"
+        android:id="@+id/txtApiStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/labelProvidedAPI"
-        android:layout_below="@+id/labelProvidedAPI"
-        android:text="@string/installed_version" />
+        android:layout_alignLeft="@+id/txtDeviceModel"
+        android:layout_below="@+id/txtDeviceModel"
+        android:text="@string/nd" />
+    
+    <TextView
+        android:id="@+id/labelBackupStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/labelApiStatus"
+        android:layout_below="@+id/labelApiStatus"
+        android:text="@string/backup_status" />
 
     <TextView
-        android:id="@+id/textView1"
+        android:id="@+id/txtBackupStatus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/labelInstalledVersion"
-        android:layout_below="@+id/labelInstalledVersion"
-        android:text="@string/provided_version" />
-
-    <TextView
-        android:id="@+id/txtSystemReady"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/textView1"
-        android:layout_below="@+id/textView1"
-        android:text="" />
-
+        android:layout_alignLeft="@+id/txtApiStatus"
+        android:layout_below="@+id/txtApiStatus"
+        android:text="@string/nd" />
+    
     <TextView
         android:id="@+id/labelLog"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/txtSystemReady"
-        android:layout_below="@+id/txtSystemReady"
+        android:layout_alignLeft="@+id/labelBackupStatus"
+        android:layout_below="@+id/labelBackupStatus"
         android:text="@string/log" />
 
-    <ScrollView
-        android:id="@+id/logLayout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/btnInstall"
-        android:layout_alignLeft="@+id/labelLog"
-        android:layout_below="@+id/labelLog" >
-
-        <TextView
-            android:id="@+id/txtLog"
-            android:layout_width="306dp"
-            android:layout_height="wrap_content"
-            android:text="" />
-    </ScrollView>
-
     <TextView
-        android:id="@+id/txtInstalledAPIVer"
+        android:id="@+id/txtDeviceModel"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/labelProvidedAPI"
-        android:layout_marginLeft="@dimen/padding_small"
-        android:layout_marginRight="@dimen/padding_small"
-        android:layout_toRightOf="@+id/textView1"
+        android:layout_alignBaseline="@+id/labelDeviceModel"
+        android:layout_alignBottom="@+id/labelDeviceModel"
+        android:layout_marginLeft="20dp"
+        android:layout_toRightOf="@+id/labelDeviceModel"
         android:text="@string/nd" />
-
-    <TextView
-        android:id="@+id/txtProvidedAPIVer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/labelInstalledVersion"
-        android:layout_alignLeft="@+id/txtInstalledAPIVer"
-        android:text="@string/current_api_version" />
-
-    <TextView
-        android:id="@+id/txtInstalledFrameworkVer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/textView1"
-        android:layout_alignLeft="@+id/txtProvidedAPIVer"
-        android:text="" />
-
-    <TextView
-        android:id="@+id/txtProvidedFrameworkVer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/txtSystemReady"
-        android:layout_alignLeft="@+id/txtInstalledFrameworkVer"
-        android:text="@string/current_framework_version" />
 
 </RelativeLayout>

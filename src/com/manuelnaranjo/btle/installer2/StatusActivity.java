@@ -1,11 +1,17 @@
 
-package com.manuelnaranjo.btle.installer;
+package com.manuelnaranjo.btle.installer2;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.List;
 
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.pm.ActivityInfo;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
@@ -16,34 +22,65 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.broadcom.bt.le.api.BleAdapter;
 import com.stericson.RootTools.Command;
 import com.stericson.RootTools.CommandCapture;
 import com.stericson.RootTools.RootTools;
 
 public class StatusActivity extends Activity implements InstallerListener {
-    static final String TAG = "BTLE-Status";
+    static final String TAG = "BTLE-Installer";
 
-    private TextView mTxtInstalledAPIVersion, mTxtProvidedAPIVersion,
-            mTxtSystemReady, mTxtInstalledFrameworkVersion,
-            mTxtProvidedFrameworkVersion, mTxtLog;
+    /*
+     * List of provided models
+     */
+    private static List<String> MODELS = Arrays.asList(
+    										"grouper", 
+    										"tuna", 
+    										"manta");
+    private static List<String> FILES = Arrays.asList(
+											"libbt-hci.so",
+											"libbt-utils.so",
+											"bluetooth.default.so");
+    
+    private String mBOARD;
+    private TextView mTxtDeviceBoard, mTxtApiStatus, 
+    					mTxtBackupStatus, mTxtLog;
     private Button mBtnInstall, mBtnUninstall;
     
     private static final int RESULT_BUSYBOX=1;
 
+    private boolean mCompatible = false;
     private boolean mRootReady = false;
     private boolean mInstalled = false;
+    
+    private File mBackupDir;
 
+    public void logVerbose(String t) {
+    	Log.v(TAG, t);
+    	addToLog("V: " + t);
+    }
+    
+    public void logInfo(String t) {
+    	Log.i(TAG, t);
+    	addToLog("I: " + t);
+    }
+    
+    public void logError(String t){
+    	logError(t, null);
+    }
+    public void logError(String t, Exception e) {
+    	Log.e(TAG, t, e);
+    	addToLog("E: " + t);
+    }
     
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == RESULT_BUSYBOX){
-            Log.v(TAG, "Got result from busybox installation " + resultCode);
+            logVerbose("Got result from busybox installation " + resultCode);
             if (resultCode == RESULT_OK){
-                Log.v(TAG, "Busybox was installed");
+                logVerbose("Busybox was installed");
                 updateValues();
             } else {
-                Log.v(TAG, "failed to install busybox");
+                logError("Failed to install busybox");
                 Toast.makeText(getApplicationContext(), 
                         getResources().getString(R.string.busybox_required), 
                         Toast.LENGTH_LONG).show();
@@ -55,83 +92,47 @@ public class StatusActivity extends Activity implements InstallerListener {
 
     public String testRoot() {
         if (!RootTools.isRootAvailable()) {
-            mTxtLog.append("root not available\n");
-            Log.e(TAG, "root not available");
+        	logError("Root not available");
             return getResources().getString(R.string.root_not_available);
         }
 
         if (!RootTools.isAccessGiven()) {
-            Log.e(TAG, "root not given");
-            mTxtLog.append("root not granted\n");
+        	logError("Root not granted");
             return getResources().getString(R.string.root_required);
         }
         
         if (!RootTools.isBusyboxAvailable()){
-            Log.e(TAG, "no busybox");
-            mTxtLog.append("no busybox available\n");
+        	logInfo("Busybox not available");
             RootTools.offerBusyBox(this, RESULT_BUSYBOX);
             return getResources().getString(R.string.busybox_required);
         }
 
-        mTxtLog.append("root ready\n");
+        logInfo("Root ready");
         mRootReady = true;
         return getResources().getString(R.string.system_ok);
     }
-
-    public String getInstalledAPIVersionNumber() {
-        Log.i(TAG, "getting installed api version number");
-
-        try{
-            return Integer.toString(BleAdapter.getApiLevel());
-        } catch (RuntimeException e){
-            Log.e(TAG, "failed recovering api level", e);
-            mTxtLog.append("API not installed, reason: " + e.getMessage() + "\n");
-        }
-        return getResources().getString(R.string.no_api_level);
-    }
     
-    public String getInstalledFrameworkVersionNumber() {
-        Log.i(TAG, "getting installed framework version number");
-
-        try{
-            String o = BleAdapter.getFrameworkVersion();
-            mInstalled = true;
-            return o;
-        } catch (RuntimeException e){
-            Log.e(TAG, "failed recovering version number", e);
-        }
-        return getResources().getString(R.string.no_framework_version);
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_status);
-
-        mTxtInstalledAPIVersion = (TextView) this.findViewById(R.id.txtInstalledAPIVer);
-        mTxtProvidedAPIVersion = (TextView) this.findViewById(R.id.txtProvidedAPIVer);
-        mTxtInstalledFrameworkVersion = (TextView) this.findViewById(R.id.txtInstalledFrameworkVer);
-        mTxtProvidedFrameworkVersion = (TextView) this.findViewById(R.id.txtProvidedFrameworkVer);
-        mTxtSystemReady = (TextView) this.findViewById(R.id.txtSystemReady);
+        
+        mTxtDeviceBoard = (TextView) this.findViewById(R.id.txtDeviceModel);
+        mTxtApiStatus = (TextView) this.findViewById(R.id.txtApiStatus);
+        mTxtBackupStatus = (TextView) this.findViewById(R.id.txtBackupStatus);
         mTxtLog = (TextView) this.findViewById(R.id.txtLog);
         mTxtLog.setText("");
 
         mBtnInstall = (Button) this.findViewById(R.id.btnInstall);
         mBtnUninstall = (Button) this.findViewById(R.id.btnUninstall);
-
-        String apiLevel = getResources().getString(R.string.current_api_version);
-        mTxtProvidedAPIVersion.setText(apiLevel);
-        
-        String frameworkLevel = getResources().getString(R.string.current_framework_version);
-        mTxtProvidedFrameworkVersion.setText(frameworkLevel);
         
         mBtnInstall.setOnClickListener(new OnClickListener() {
-
             @Override
             public void onClick(View v) {
                 InstallProcess p = new InstallProcess(StatusActivity.this);
                 addToLog("Starting installation");
                 p.start();
+                mBtnInstall.setEnabled(false);
             }
         });
         
@@ -142,16 +143,29 @@ public class StatusActivity extends Activity implements InstallerListener {
                 RemoveProcess p = new RemoveProcess(StatusActivity.this);
                 addToLog("Removing installation");
                 p.start();
+                mBtnUninstall.setEnabled(false);
             }
         });
         
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        mBOARD = android.os.Build.BOARD;
+        mTxtDeviceBoard.setText(mBOARD);
+        if (!MODELS.contains(mBOARD)){
+        	logError("Device is not compatible, Nexus 7 2012, Nexus 10 and Galaxy Nexus only by now");
+        	mBtnInstall.setEnabled(false);
+        	mBtnUninstall.setEnabled(false);
+        	return;
+        }
+        
+        mCompatible = true;
+        mBackupDir = new File(getFilesDir(), "backup");
+        testRoot();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        updateValues();
+        if (mCompatible)
+        	updateValues();
     }
     
     @Override
@@ -160,19 +174,31 @@ public class StatusActivity extends Activity implements InstallerListener {
         //setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
     }
     
+    private boolean checkBackupStatus() {
+    	boolean r = true;
+    	
+    	for (String f: FILES) {
+    		boolean res = new File(mBackupDir, f).exists();
+    		logInfo("File " + f + " backup " + (res ? "found" : "not found"));
+    		r = res && r;
+    	}
+    	
+    	mTxtBackupStatus.setText(r ? R.string.found : R.string.not_found);
+    	
+    	return r;
+    }
+    
     public void updateValues(){
         this.runOnUiThread(new Runnable() {
 
             @Override
             public void run() {
-                mTxtInstalledAPIVersion.setText(getInstalledAPIVersionNumber());
-                mTxtInstalledFrameworkVersion.setText(getInstalledFrameworkVersionNumber());
-                mTxtSystemReady.setText(testRoot());
-
-                mBtnInstall.setEnabled(mRootReady);
-                mBtnUninstall.setEnabled(mRootReady && mInstalled);
+            	mInstalled = getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE);
+                mTxtApiStatus.setText(mInstalled == true ? R.string.available : R.string.not_installed);
+                boolean backup = checkBackupStatus();
+                mBtnInstall.setEnabled(!mInstalled && mRootReady);
+                mBtnUninstall.setEnabled(backup && mRootReady);
             }
-
         });
         
     }
@@ -185,28 +211,24 @@ public class StatusActivity extends Activity implements InstallerListener {
     
     @Override
     public void clearLog(){
-        this.runOnUiThread(new Runnable() {
-
-            @Override
-            public void run() {
-                mTxtLog.setText("");
-            }
-
-        });
-        
+    	if (mTxtLog != null)
+    		this.runOnUiThread(new Runnable() {
+    			@Override
+    			public void run() {
+    				mTxtLog.setText("");
+    			}
+    		});
     }
 
     @Override
     public void addToLog(final String t) {
-        this.runOnUiThread(new Runnable() {
-
-            @Override
-            public void run() {
-                Log.i(TAG, t);
-                mTxtLog.append(t + "\n");
-            }
-
-        });
+    	if (mTxtLog != null)
+    		this.runOnUiThread(new Runnable() {
+    			@Override
+    			public void run() {
+    				mTxtLog.append(t + "\n");
+    			}
+    		});
     }
     
     interface yesNoListener {
@@ -266,4 +288,20 @@ public class StatusActivity extends Activity implements InstallerListener {
             }
         });
     }
+
+	@Override
+	public File getBackupDir() {
+		return mBackupDir;
+	}
+
+	@Override
+	public InputStream getTargetFile(String path) {
+		path = mBOARD + "/" + path;
+		try {
+			return getAssets().open(path);
+		} catch (IOException e) {
+			logError("Failed getting asset " + path );
+		}
+		return null;
+	}
 }

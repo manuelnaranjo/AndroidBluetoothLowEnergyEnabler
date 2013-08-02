@@ -1,14 +1,14 @@
 <resources>
     
-    <string name="app_name">Bluetooth Smart</string>
+    <string name="app_name">Bluetooth Low Energy Enabler</string>
     <string name="title_activity_status">BTLE Status</string>
     <string name="installed_version">Installed Version:</string>
     <string name="nd">ND</string>
     <string name="provided_version">Provided Version:</string>
     
-    <string name="current_api_version">_API_VERSION_</string>
-    <string name="current_framework_version">_FRAMEWORK_VERSION_</string>
-    
+    <string name="current_api_version"> 5</string>
+    <string name="current_framework_version">0.5.8</string>
+ 
     <string name="not_installed">Not Installed</string>
     <string name="no_api_level">No API Level</string>
     <string name="no_framework_version">No Framework Version</string>
@@ -24,4 +24,12 @@
     <string name="installed_api_version">Installed API:</string>
     <string name="provided_api_version">Provided API:</string>
     <string name="busybox_required">BusyBox is required for this app to work, please install it</string>
+    <string name="device_not_compatible">Your device is not compatible with this package yet, you can only use Nexus 7, Nexus 10 or Galaxy Nexus right now</string>
+    <string name="api_status">API Status</string>
+    <string name="device_board">Device Board</string>
+    <string name="backup_status">Backup Status</string>
+    <string name="available">Available</string>
+    
+    <string name="found">Found</string>
+    <string name="not_found">Not Found</string>
 </resources>
