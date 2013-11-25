@@ -1,6 +1,8 @@
-Open Bluetooth Low Energy SDK for Android Implementation Installer
-===================================================================
+Bluetooth Low Energy Enabler for Nexus 7, 10 and Galaxy installer
 
-This project provides an interactive self-contained installer for the project.
-It will keep track of installations and uninstallations, requires rooting.
+This is the project I use to generate:
+* https://play.google.com/store/apps/details?id=com.manuelnaranjo.btle.installer2
 
+In order to get a full build you will need an Android AOSP checkout and some
+patches, this will generate the installer and may reflect the last available
+binaries.
