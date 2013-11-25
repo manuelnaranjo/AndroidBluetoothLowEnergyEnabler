@@ -87,6 +87,11 @@ public class InstallProcess extends Thread {
         							 "/system/lib/libbt-utils.so",
         							 "/system/lib/hw/bluetooth.default.so")){
         	String b = new File(t).getName();
+        	
+        	if (new File(mBackupPath+"/"+b).exists())
+        		// ignore current backup
+        		continue;
+        	
         	ret = RootTools.copyFile(t, mBackupPath + "/" + b, false, true);
         	if (ret)
         		mListener.logInfo("Backed up file: " + b);
