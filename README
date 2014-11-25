@@ -6,3 +6,20 @@ This is the project I use to generate:
 In order to get a full build you will need an Android AOSP checkout and some
 patches, this will generate the installer and may reflect the last available
 binaries.
+
+Building instructions
+======================
+
+Short instructions on how to build the binaries
+    
+    source build/envsetup.sh
+    lunch aosp_<model>-userdebug
+    modify devices/<maker>/<model>/bluetooth/bluedroid_builcfg.h
+    make bluetooth.default -j 4
+    <copy files>
+    ....
+    <update AndroidManifest.xml>
+    ant release
+    jarsigner -verbose -signalign SHA1withRSA -keystore <keystore> \
+        bin/BTLE-Installer-releaase-unsigned.apk <alias>
+    zipalign
