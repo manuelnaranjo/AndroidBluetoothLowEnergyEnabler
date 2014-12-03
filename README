@@ -20,6 +20,6 @@ Short instructions on how to build the binaries
     ....
     <update AndroidManifest.xml>
     ant release
-    jarsigner -verbose -signalign SHA1withRSA -keystore <keystore> \
+    jarsigner -verbose -sigalg SHA1withRSA -keystore <keystore> \
         bin/BTLE-Installer-releaase-unsigned.apk <alias>
     zipalign
