@@ -33,13 +33,15 @@ import java.util.List;
 
 public class StatusActivity extends Activity implements InstallerListener {
   static final String TAG;
-  static final String INTENT;
+  static final String PROGRESS;
+  static final String COMPLETE;
   static final String DATA;
 
   static {
     TAG = "BTLE-Installer";
-    INTENT = "com.manuelnaranjo.btle.installer2.PROGRESS";
-    DATA = "data";
+    PROGRESS = "com.manuelnaranjo.btle.installer2.PROGRESS";
+    COMPLETE = "com.manuelnaranjo.btle.installer2.COMPLETE";
+    DATA = "DATA";
   }
 
   /*
@@ -53,10 +55,11 @@ public class StatusActivity extends Activity implements InstallerListener {
     "libbt-vendor.so",
     "bluetooth.default.so");
 
-  private static List<String> DIRECTORIES = Arrays.asList(
+  private static List<String> ASSETS = Arrays.asList(
     "grouper",
     "manta",
-    "xbin"
+    "xbin",
+    "install.sh"
   );
 
   private String mBOARD;
@@ -78,12 +81,44 @@ public class StatusActivity extends Activity implements InstallerListener {
     mReceiver = new BroadcastReceiver() {
       @Override
       public void onReceive(Context context, Intent intent) {
-        if (!intent.getAction().equals(INTENT)) {
+        if (intent.getAction().equals(PROGRESS)) {
+          String line = intent.getStringExtra(DATA);
+          Log.v(TAG, intent.getAction() + " " + line);
+          if (line != null) {
+            logVerbose(line);
+          }
           return;
         }
 
-        String line = intent.getStringExtra(DATA);
-        logVerbose(line);
+        if (intent.getAction().equals(COMPLETE)) {
+          boolean val = intent.getBooleanExtra(DATA, false);
+          Log.v(TAG, intent.getAction() + " " + val);
+          if (val) {
+            yesNoAlert("Installation completed", "Do you want to reboot now?",
+              new yesNoListener() {
+                @Override
+                public void actionYes() {
+                  try {
+                    Runtime.getRuntime().exec("/system/bin/reboot");
+                  } catch (IOException e) {
+
+                    Toast.makeText(getApplicationContext(),
+                      "Failed rebooting",
+                      Toast.LENGTH_LONG).show();
+
+                    Log.e(TAG, "Failed to reboot", e);
+                  }
+                }
+
+                @Override
+                public void actionNo() {
+                  mBtnUninstall.setEnabled(true);
+                }
+              });
+          }
+        }
+
+
       }
     };
   }
@@ -130,11 +165,19 @@ public class StatusActivity extends Activity implements InstallerListener {
   public String testRoot() {
     if (!RootTools.isRootAvailable()) {
       logError("Root not available");
+      Toast.makeText(getApplicationContext(),
+        "Your device needs to be rooted first",
+        Toast.LENGTH_LONG).show();
+
       return getResources().getString(R.string.root_not_available);
     }
 
     if (!RootTools.isAccessGiven()) {
       logError("Root not granted");
+      Toast.makeText(getApplicationContext(),
+        "You need to provide root permissions for this app to work",
+        Toast.LENGTH_LONG).show();
+
       return getResources().getString(R.string.root_required);
     }
 
@@ -150,7 +193,7 @@ public class StatusActivity extends Activity implements InstallerListener {
     mFilesPath = "/data/data/" + this.getPackageName() + "/files/";
     mBusyBox = mFilesPath + "xbin/busybox";
 
-    for (String path: DIRECTORIES) {
+    for (String path: ASSETS) {
       copyFileOrDir(path);
     }
 
@@ -212,8 +255,11 @@ public class StatusActivity extends Activity implements InstallerListener {
     }
 
     if (!mReceiverRegistered) {
-      registerReceiver(mReceiver,
-        new IntentFilter("com.manuelnaranjo.btle.installer2.PROGRESS"));
+      IntentFilter filter = new IntentFilter();
+      filter.addAction(PROGRESS);
+      filter.addAction(COMPLETE);
+      registerReceiver(mReceiver, filter);
+
       mReceiverRegistered = true;
     }
 
@@ -221,6 +267,7 @@ public class StatusActivity extends Activity implements InstallerListener {
 
   @Override
   protected void onPause() {
+    super.onPause();
     if (mReceiverRegistered) {
       unregisterReceiver(mReceiver);
       mReceiverRegistered = false;
@@ -411,7 +458,7 @@ public class StatusActivity extends Activity implements InstallerListener {
       out.close();
       out = null;
     } catch (Exception e) {
-      Log.e("tag", e.getMessage());
+      Log.e(TAG, e.getMessage());
     }
 
   }
