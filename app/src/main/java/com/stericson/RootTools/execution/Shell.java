@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.concurrent.TimeoutException;
 
 import android.content.Context;
-import android.provider.DocumentsContract;
 
 import com.stericson.RootTools.RootTools;
 import com.stericson.RootTools.exceptions.RootDeniedException;
@@ -1124,7 +1123,7 @@ public class Shell
         /*
          * setOom for shell processes (sh and su if root shell)
          * and discard outputs
-         * 
+         *
          */
         private void setShellOom()
         {
