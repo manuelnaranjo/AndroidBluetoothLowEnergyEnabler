@@ -20,27 +20,52 @@
  * limitations under that License.
  */
 
-package com.stericson.RootTools;
+package com.stericson.RootTools.execution;
 
-import java.io.Serializable;
+import com.stericson.RootTools.RootTools;
 
-/**
- * Implement this interface and inject the resulting object
- * when invoking <code>sendShell</code>.
- * <code>RootTools</code> comes with a reference implementation:
- * <code>RootTools.Result</code>
- */
-public interface IResult {
-    public abstract void process(String line) throws Exception;
-    public abstract void processError(String line) throws Exception;
-    public abstract void onFailure(Exception ex);
-    public abstract void onComplete(int diag);
+public class CommandCapture extends Command
+{
+    private StringBuilder sb = new StringBuilder();
 
-    public IResult      setProcess(Process process);
-    public Process      getProcess();
-    public IResult      setData(Serializable data);
-    public Serializable getData();
-    public IResult      setError(int error);
-    public int          getError();
+    public CommandCapture(int id, String... command)
+    {
+        super(id, command);
+    }
 
+    public CommandCapture(int id, boolean handlerEnabled, String... command)
+    {
+        super(id, handlerEnabled, command);
+    }
+
+    public CommandCapture(int id, int timeout, String... command)
+    {
+        super(id, timeout, command);
+    }
+
+
+    @Override
+    public void commandOutput(int id, String line)
+    {
+        sb.append(line).append('\n');
+        RootTools.log("Command", "ID: " + id + ", " + line);
+    }
+
+    @Override
+    public void commandTerminated(int id, String reason)
+    {
+        //pass
+    }
+
+    @Override
+    public void commandCompleted(int id, int exitcode)
+    {
+        //pass
+    }
+
+    @Override
+    public String toString()
+    {
+        return sb.toString();
+    }
 }

@@ -20,29 +20,28 @@
  * limitations under that License.
  */
 
-/*
- *Special thanks to Jeremy Lakeman for the following code and for teaching me something new.
- *
- *Stephen
- */
+package com.stericson.RootTools.containers;
 
-package com.stericson.RootTools;
+import java.io.File;
 
-public class CommandCapture extends Command {
-	private StringBuilder sb = new StringBuilder();
+public class Symlink
+{
+    protected final File file;
+    protected final File symlinkPath;
 
-	public CommandCapture(int id, String... command) {
-		super(id, command);
-	}
+    public Symlink(File file, File path)
+    {
+        this.file = file;
+        symlinkPath = path;
+    }
 
-	@Override
-	public void output(int id, String line) {
-		sb.append(line).append('\n');
-		RootTools.log("Command", "ID: " + id + ", " + line);
-	}
-	
-	@Override
-	public String toString() {
-		return sb.toString();
-	}
+    public File getFile()
+    {
+        return this.file;
+    }
+
+    public File getSymlinkPath()
+    {
+        return symlinkPath;
+    }
 }
