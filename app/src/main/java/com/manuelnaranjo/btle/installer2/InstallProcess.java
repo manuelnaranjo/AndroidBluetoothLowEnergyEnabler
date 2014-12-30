@@ -1,5 +1,10 @@
-
 package com.manuelnaranjo.btle.installer2;
+
+import android.content.Context;
+
+import com.stericson.RootTools.Command;
+import com.stericson.RootTools.CommandCapture;
+import com.stericson.RootTools.RootTools;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -9,12 +14,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 
-import android.content.Context;
-
-import com.stericson.RootTools.Command;
-import com.stericson.RootTools.CommandCapture;
-import com.stericson.RootTools.RootTools;
-
 public class InstallProcess extends Thread {
   private InstallerListener mListener;
   private String mPath = null;
@@ -23,7 +22,7 @@ public class InstallProcess extends Thread {
     mListener = l;
   }
 
-  private boolean sendCommand(String c){
+  private boolean sendCommand(String c) {
     try {
       Command cmd = RootTools.getShell(true).add(
         new CommandCapture(0, c));
@@ -43,14 +42,13 @@ public class InstallProcess extends Thread {
     target.getParentFile().mkdirs();
     try {
       out = new BufferedOutputStream(new FileOutputStream(target));
-      while (inp.available()>0){
+      while (inp.available() > 0) {
         count = inp.read(buffer, 0, BUFF_SIZE);
         out.write(buffer, 0, count);
       }
-    } catch (IOException e){
+    } catch (IOException e) {
       mListener.logError("Failed while dumping file", e);
-    }
-    finally {
+    } finally {
       if (out != null) {
         try {
           out.close();
@@ -83,13 +81,13 @@ public class InstallProcess extends Thread {
 
     mListener.logVerbose("Creating backup into " + mBackupPath);
 
-    for (String t: Arrays.asList(
+    for (String t : Arrays.asList(
       "/system/lib/hw/bluetooth.default.so",
       "/system/vendor/lib/libbt-vendor.so"
-    )){
+    )) {
       String b = new File(t).getName();
 
-      if (new File(mBackupPath+"/"+b).exists())
+      if (new File(mBackupPath + "/" + b).exists())
         // ignore current backup
         continue;
 
@@ -106,18 +104,18 @@ public class InstallProcess extends Thread {
 
     ret = sendCommand("mount -o remount,rw /system");
 
-    if (!ret){
+    if (!ret) {
       mListener.logError("Failed to remount /system into writable mode");
       return;
     }
 
     mListener.logInfo("Remounted /system as writable");
 
-    for (String t: Arrays.asList(
+    for (String t : Arrays.asList(
       "lib/hw/bluetooth.default.so",
       "vendor/lib/libbt-vendor.so",
       "etc/permissions/android.hardware.bluetooth_le.xml"
-    )){
+    )) {
       InputStream s = mListener.getTargetFile(t);
       if (s == null)
         return;
@@ -127,11 +125,11 @@ public class InstallProcess extends Thread {
       DumpFile(s, f);
       String fn = new File(t).getName();
       mListener.logInfo("Dumped " + fn);
-      String p = targetPath+"/"+t;
+      String p = targetPath + "/" + t;
 
       String st = "/system/" + t;
 
-      ret = sendCommand("cp " + p + " "+ st);
+      ret = sendCommand("cp " + p + " " + st);
       mListener.logInfo("Copied " + fn + " " + (ret ? "correctly" : "failure"));
       if (!ret)
         continue;
