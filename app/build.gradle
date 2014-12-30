@@ -1,10 +1,23 @@
 apply plugin: 'com.android.application'
 
+Properties props = new Properties()
+props.load(new FileInputStream(file("btle.properties")))
+
 android {
-    compileSdkVersion 18
+    compileSdkVersion 21
     buildToolsVersion "21.1.2"
 
-    defaultConfig {
+    signingConfigs {
+      release {
+        storeFile file(props['keystore'])
+        storePassword props['keystore.password']
+        keyAlias props['keystore.alias']
+        keyPassword props['key.password']
+      }
+    }
+
+
+  defaultConfig {
         applicationId "com.manuelnaranjo.btle.installer2"
         minSdkVersion 18
         targetSdkVersion 18
@@ -13,6 +26,7 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            signingConfig signingConfigs.release
         }
     }
     productFlavors {
