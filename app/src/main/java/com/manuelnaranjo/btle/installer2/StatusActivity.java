@@ -10,6 +10,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.res.Configuration;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -19,9 +20,11 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.stericson.RootTools.Command;
-import com.stericson.RootTools.CommandCapture;
 import com.stericson.RootTools.RootTools;
+import com.stericson.RootTools.exceptions.RootDeniedException;
+import com.stericson.RootTools.execution.Command;
+import com.stericson.RootTools.execution.CommandCapture;
+import com.stericson.RootTools.execution.Shell;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -31,6 +34,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 public class StatusActivity extends Activity {
   static final String TAG;
@@ -52,18 +56,15 @@ public class StatusActivity extends Activity {
     "grouper",
     "manta");
 
-  private static List<String> FILES = Arrays.asList(
-    "libbt-vendor.so",
-    "bluetooth.default.so");
-
+  // this are assets we always extract
   private static List<String> ASSETS = Arrays.asList(
-    "grouper",
-    "manta",
     "xbin",
-    "install.sh"
+    "install.sh",
+    "uninstall.sh"
   );
 
   private String mBOARD;
+  private String mBUILD;
   private TextView mTxtDeviceBoard, mTxtApiStatus, mTxtLog;
   private Button mBtnInstall, mBtnUninstall;
 
@@ -91,8 +92,13 @@ public class StatusActivity extends Activity {
         if (intent.getAction().equals(COMPLETE)) {
           boolean val = intent.getBooleanExtra(DATA, false);
           Log.v(TAG, intent.getAction() + " " + val);
+          resetButtons();
           if (val) {
             reboot();
+          } else {
+            Toast.makeText(getApplicationContext(),
+              "Something failed",
+              Toast.LENGTH_LONG).show();
           }
         }
 
@@ -100,8 +106,6 @@ public class StatusActivity extends Activity {
       }
     };
   }
-
-  private File mBackupDir;
 
   public void logVerbose(String t) {
     Log.v(TAG, t);
@@ -186,19 +190,7 @@ public class StatusActivity extends Activity {
     mBtnInstall.setOnClickListener(new OnClickListener() {
       @Override
       public void onClick(View v) {
-        addToLog("Starting installation");
-        mBtnInstall.setEnabled(false);
-        mBtnUninstall.setEnabled(false);
-
-        String command = "/system/xbin/su " + mBusyBox + " ash "
-          + mFilesPath + "install.sh";
-        Log.v(TAG, "Running: " + command);
-        try {
-          Runtime.getRuntime().exec(command);
-        } catch (IOException e) {
-          logError("Failed to start the installation", e);
-        }
-
+        handleInstall();
       }
     });
 
@@ -206,21 +198,13 @@ public class StatusActivity extends Activity {
 
       @Override
       public void onClick(View v) {
-        addToLog("Starting uninstalling");
-        mBtnInstall.setEnabled(false);
-        mBtnUninstall.setEnabled(false);
-
-        String command = mBusyBox + " ash " + mFilesPath + "/uninstall.sh";
-        Log.v(TAG, "Running: " + command);
-        try {
-          Runtime.getRuntime().exec(command);
-        } catch (IOException e) {
-          logError("Failed to start the installation", e);
-        }
+        handleUninstall();
       }
     });
 
     mBOARD = android.os.Build.BOARD;
+    mBUILD = android.os.Build.ID;
+
     mTxtDeviceBoard.setText(mBOARD);
     if (!MODELS.contains(mBOARD)) {
       logError("Device is not compatible, Nexus 7 2012, Nexus 10 and Galaxy Nexus only by now");
@@ -272,11 +256,25 @@ public class StatusActivity extends Activity {
         clearLog();
         mInstalled = getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE);
         mTxtApiStatus.setText(mInstalled == true ? R.string.available : R.string.not_installed);
-        mBtnInstall.setEnabled(mRootReady);
-        mBtnUninstall.setEnabled(mRootReady);
+        resetButtons();
       }
     });
+  }
 
+  public void resetButtons() {
+    this.runOnUiThread(new Runnable() {
+
+      @Override
+      public void run() {
+        if (mRootReady) {
+          mBtnInstall.setEnabled(!mInstalled);
+          mBtnUninstall.setEnabled(mInstalled);
+        } else {
+          mBtnInstall.setEnabled(false);
+          mBtnUninstall.setEnabled(false);
+        }
+      }
+    });
   }
 
   @Override
@@ -329,10 +327,8 @@ public class StatusActivity extends Activity {
 
   yesNoListener rebootListener = new yesNoListener() {
     public void actionYes() {
-      Command c;
       try {
-        c = RootTools.getShell(true).add(new CommandCapture(0, "reboot"));
-        c.exitCode();
+        RootTools.restartAndroid();
         return;
       } catch (Exception e) {
         Log.e(TAG, "reboot error", e);
@@ -374,7 +370,7 @@ public class StatusActivity extends Activity {
         String fullPath = mFilesPath + path;
         File dir = new File(fullPath);
         if (!dir.exists())
-          dir.mkdir();
+          dir.mkdirs();
         for (int i = 0; i < assets.length; ++i) {
           if (path.length() > 0) {
             copyFileOrDir(path + "/" + assets[i]);
@@ -411,6 +407,82 @@ public class StatusActivity extends Activity {
       out = null;
     } catch (Exception e) {
       Log.e(TAG, e.getMessage());
+    }
+
+  }
+
+  public class MyCommandCapture extends CommandCapture {
+    public MyCommandCapture(int id, String cmd) {
+      super(id, 2*1000*1000, cmd);
+    }
+
+    public void commandOutput(int id, String line)
+    {
+      super.commandOutput(id, line);
+      Log.v(TAG, line);
+    }
+
+    @Override
+    public void commandTerminated(int id, String reason)
+    {
+      Log.v(TAG,"CommandTerminated " + reason);
+    }
+
+    @Override
+    public void commandCompleted(int id, int exitcode)
+    {
+      Log.v(TAG, "CommandCompleted " + exitcode);
+    }
+  }
+
+  private void handleInstall() {
+
+    addToLog("Extracting assets");
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+      copyFileOrDir(mBOARD + "/ble-5.0");
+    } else {
+      copyFileOrDir(mBOARD + "/ble-4.0");
+    }
+
+    addToLog("Starting installation");
+    mBtnInstall.setEnabled(false);
+    mBtnUninstall.setEnabled(false);
+
+    String command = mBusyBox + " ash " + mFilesPath + "install.sh";
+    Log.v(TAG, "Running: " + command);
+    Command capture = new MyCommandCapture(10, command);
+
+    try {
+      Shell shell = RootTools.getShell(true);
+      shell.useCWD(getApplicationContext());
+      shell.add(capture);
+    } catch (Exception e) {
+      logError("Failed to start the installation", e);
+    }
+
+  }
+
+  private void handleUninstall() {
+
+    addToLog("Extracting assets");
+
+    copyFileOrDir(mBOARD + "/" + mBOARD + "-" + mBUILD.toLowerCase());
+
+    addToLog("Starting removal");
+    mBtnInstall.setEnabled(false);
+    mBtnUninstall.setEnabled(false);
+
+    String command = mBusyBox + " ash " + mFilesPath + "uninstall.sh";
+    Log.v(TAG, "Running: " + command);
+    Command capture = new MyCommandCapture(10, command);
+
+    try {
+      Shell shell = RootTools.getShell(true);
+      shell.useCWD(getApplicationContext());
+      shell.add(capture);
+    } catch (Exception e) {
+      logError("Failed to start the installation", e);
     }
 
   }
