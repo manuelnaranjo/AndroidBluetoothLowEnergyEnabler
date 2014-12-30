@@ -1,16 +1,4 @@
-
 package com.manuelnaranjo.btle.installer2;
-
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Arrays;
-import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -20,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
@@ -33,6 +22,14 @@ import android.widget.Toast;
 import com.stericson.RootTools.Command;
 import com.stericson.RootTools.CommandCapture;
 import com.stericson.RootTools.RootTools;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.Arrays;
+import java.util.List;
 
 public class StatusActivity extends Activity implements InstallerListener {
   static final String TAG;
@@ -51,21 +48,29 @@ public class StatusActivity extends Activity implements InstallerListener {
   private static List<String> MODELS = Arrays.asList(
     "grouper",
     "manta");
+
   private static List<String> FILES = Arrays.asList(
     "libbt-vendor.so",
     "bluetooth.default.so");
+
+  private static List<String> DIRECTORIES = Arrays.asList(
+    "grouper",
+    "manta",
+    "xbin"
+  );
 
   private String mBOARD;
   private TextView mTxtDeviceBoard, mTxtApiStatus,
     mTxtBackupStatus, mTxtLog;
   private Button mBtnInstall, mBtnUninstall;
 
-  private static final int RESULT_BUSYBOX=1;
+  private static final int RESULT_BUSYBOX = 1;
 
   private boolean mCompatible = false;
   private boolean mRootReady = false;
   private boolean mInstalled = false;
   private Boolean mReceiverRegistered = false;
+  private String mFilesPath, mBusyBox;
 
   private BroadcastReceiver mReceiver;
 
@@ -95,9 +100,10 @@ public class StatusActivity extends Activity implements InstallerListener {
     addToLog("I: " + t);
   }
 
-  public void logError(String t){
+  public void logError(String t) {
     logError(t, null);
   }
+
   public void logError(String t, Exception e) {
     Log.e(TAG, t, e);
     addToLog("E: " + t);
@@ -105,16 +111,16 @@ public class StatusActivity extends Activity implements InstallerListener {
 
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    if (requestCode == RESULT_BUSYBOX){
+    if (requestCode == RESULT_BUSYBOX) {
       logVerbose("Got result from busybox installation " + resultCode);
-      if (resultCode == RESULT_OK){
+      if (resultCode == RESULT_OK) {
         logVerbose("Busybox was installed");
         updateValues();
       } else {
         logError("Failed to install busybox");
         Toast.makeText(getApplicationContext(),
-                       getResources().getString(R.string.busybox_required),
-                       Toast.LENGTH_LONG).show();
+          getResources().getString(R.string.busybox_required),
+          Toast.LENGTH_LONG).show();
       }
       return;
     }
@@ -158,29 +164,27 @@ public class StatusActivity extends Activity implements InstallerListener {
     mBtnUninstall = (Button) this.findViewById(R.id.btnUninstall);
 
     mBtnInstall.setOnClickListener(new OnClickListener() {
-        @Override
-        public void onClick(View v) {
-          InstallProcess p = new InstallProcess(StatusActivity.this);
-          addToLog("Starting installation");
-          p.start();
-          mBtnInstall.setEnabled(false);
-        }
-      });
+      @Override
+      public void onClick(View v) {
+        addToLog("Starting installation");
+        mBtnInstall.setEnabled(false);
+      }
+    });
 
     mBtnUninstall.setOnClickListener(new OnClickListener() {
 
-        @Override
-        public void onClick(View v) {
-          RemoveProcess p = new RemoveProcess(StatusActivity.this);
-          addToLog("Removing installation");
-          p.start();
-          mBtnUninstall.setEnabled(false);
-        }
-      });
+      @Override
+      public void onClick(View v) {
+        RemoveProcess p = new RemoveProcess(StatusActivity.this);
+        addToLog("Removing installation");
+        p.start();
+        mBtnUninstall.setEnabled(false);
+      }
+    });
 
     mBOARD = android.os.Build.BOARD;
     mTxtDeviceBoard.setText(mBOARD);
-    if (!MODELS.contains(mBOARD)){
+    if (!MODELS.contains(mBOARD)) {
       logError("Device is not compatible, Nexus 7 2012, Nexus 10 and Galaxy Nexus only by now");
       mBtnInstall.setEnabled(false);
       mBtnUninstall.setEnabled(false);
@@ -199,7 +203,7 @@ public class StatusActivity extends Activity implements InstallerListener {
       updateValues();
     }
 
-    if (!mReceiverRegistered){
+    if (!mReceiverRegistered) {
       registerReceiver(mReceiver,
         new IntentFilter("com.manuelnaranjo.btle.installer2.PROGRESS"));
       mReceiverRegistered = true;
@@ -223,7 +227,7 @@ public class StatusActivity extends Activity implements InstallerListener {
   private boolean checkBackupStatus() {
     boolean r = true;
 
-    for (String f: FILES) {
+    for (String f : FILES) {
       boolean res = new File(mBackupDir, f).exists();
       logInfo("File " + f + " backup " + (res ? "found" : "not found"));
       r = res && r;
@@ -234,18 +238,18 @@ public class StatusActivity extends Activity implements InstallerListener {
     return r;
   }
 
-  public void updateValues(){
+  public void updateValues() {
     this.runOnUiThread(new Runnable() {
 
-        @Override
-        public void run() {
-          mInstalled = getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE);
-          mTxtApiStatus.setText(mInstalled == true ? R.string.available : R.string.not_installed);
-          boolean backup = checkBackupStatus();
-          mBtnInstall.setEnabled(!mInstalled && mRootReady);
-          mBtnUninstall.setEnabled(backup && mRootReady);
-        }
-      });
+      @Override
+      public void run() {
+        mInstalled = getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE);
+        mTxtApiStatus.setText(mInstalled == true ? R.string.available : R.string.not_installed);
+        boolean backup = checkBackupStatus();
+        mBtnInstall.setEnabled(!mInstalled && mRootReady);
+        mBtnUninstall.setEnabled(mInstalled && mRootReady);
+      }
+    });
 
   }
 
@@ -256,29 +260,30 @@ public class StatusActivity extends Activity implements InstallerListener {
   }
 
   @Override
-  public void clearLog(){
+  public void clearLog() {
     if (mTxtLog != null)
       this.runOnUiThread(new Runnable() {
-    			@Override
-    			public void run() {
-    				mTxtLog.setText("");
-    			}
-    		});
+        @Override
+        public void run() {
+          mTxtLog.setText("");
+        }
+      });
   }
 
   @Override
   public void addToLog(final String t) {
     if (mTxtLog != null)
       this.runOnUiThread(new Runnable() {
-    			@Override
-    			public void run() {
-    				mTxtLog.append(t + "\n");
-    			}
-    		});
+        @Override
+        public void run() {
+          mTxtLog.append(t + "\n");
+        }
+      });
   }
 
   interface yesNoListener {
     void actionYes();
+
     void actionNo();
   }
 
