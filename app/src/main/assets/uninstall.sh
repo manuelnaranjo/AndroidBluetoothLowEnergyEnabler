@@ -1,22 +1,18 @@
 #!/bin/sh -
 
+set -ex
+
 DATA="$PWD"
 BUSYBOX="$PWD/files/xbin/busybox"
 
 PACKAGE="com.manuelnaranjo.btle.installer2"
 PROGRESS="com.manuelnaranjo.btle.installer2.PROGRESS"
 COMPLETE="com.manuelnaranjo.btle.installer2.COMPLETE"
-
-echo $PWD
+ANDROID_BT="/system/etc/permissions/android.hardware.bluetooth_le.xml"
 
 BOARD=`getprop ro.hardware`
-BUILD=`getprop ro.build.id`
+BUILD=`getprop ro.build.id | ${BUSYBOX} tr '[:upper:]' '[:lower:]'`
 RELEASE=`getprop ro.build.version.release`
-
-set -- ${RELEASE//./ }
-MAJOR="$1"
-MINOR="$2"
-MAINTENANCE="$3"
 
 
 broadcastProgress ()
@@ -40,14 +36,12 @@ cleanup() {
     broadcastComplete "false"
 }
 
-set -e
-
 trap cleanup EXIT
 
 cd files
 
 # mount /system as RW
-mount -rw -o remount /system
+$BUSYBOX mount -rw -o remount /system
 
 broadcastProgress "/system mounted as RW"
 
@@ -56,13 +50,9 @@ broadcastProgress "Doing installation on a $BOARD device"
 # get into the right directory based on our target
 cd $BOARD
 
-if [ $MAJOR -ge "5" ]; then
-    broadcastProgress "Installing 5.X version"
-    cd ble-5.0
-else
-    broadcastProgress "Installing 4.X version"
-    cd ble-4.0
-fi
+broadcastProgress "Restoring build number ${BUILD}"
+
+cd ${BOARD}-${BUILD}
 
 for i in `$BUSYBOX find -type f`; do
     TARGETDIR="/system/$($BUSYBOX dirname ${i})/"
@@ -73,11 +63,15 @@ for i in `$BUSYBOX find -type f`; do
     chmod 755 ${TARGETDIR}/${FILE}
 done
 
-# get out now
-cd $DATA
+if [ -f ${ANDROID_BT} ]; then
+    broadcastProgress "Removing ${ANDROID_BT}"
+    rm ${ANDROID_BT}
+fi
+
+$BUSYBOX sync
 
 # remount as ro
-# mount -r -o remount /system
+# $BUSYBOX mount -r -o remount /system
 # broadcastProgress "/system mounted as RO"
 
 broadcastProgress "Completed installation"
