@@ -1,16 +1,24 @@
 
 package com.manuelnaranjo.btle.installer2;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.os.Bundle;
@@ -302,4 +310,49 @@ public class StatusActivity extends Activity implements InstallerListener {
 		}
 		return null;
 	}
+
+  private boolean unpackZip(InputStream is, String path)
+  {
+    ZipInputStream zis;
+    try
+    {
+      String filename;
+      zis = new ZipInputStream(new BufferedInputStream(is));
+      ZipEntry ze;
+      byte[] buffer = new byte[1024];
+      int count;
+
+      while ((ze = zis.getNextEntry()) != null)
+      {
+        filename = ze.getName();
+
+        // Need to create directories if not exists, or
+        // it will generate an Exception...
+        if (ze.isDirectory()) {
+          File fmd = new File(path + filename);
+          fmd.mkdirs();
+          continue;
+        }
+
+        FileOutputStream fout = new FileOutputStream(path + filename);
+
+        while ((count = zis.read(buffer)) != -1)
+        {
+          fout.write(buffer, 0, count);
+        }
+
+        fout.close();
+        zis.closeEntry();
+      }
+
+      zis.close();
+    }
+    catch(IOException e)
+    {
+      e.printStackTrace();
+      return false;
+    }
+
+    return true;
+  }
 }
