@@ -37,7 +37,7 @@
             android:text="" />
     </ScrollView>
 
-    
+
     <Button
         android:id="@+id/btnUninstall"
         android:layout_width="wrap_content"
@@ -54,7 +54,7 @@
         android:layout_above="@+id/btnUninstall"
         android:layout_alignLeft="@+id/logLayout"
         android:layout_alignParentRight="true"
-        android:text="@string/install" 
+        android:text="@string/install"
         android:layout_marginRight="@dimen/padding_small"/>
 
     <TextView
@@ -72,30 +72,14 @@
         android:layout_alignLeft="@+id/txtDeviceModel"
         android:layout_below="@+id/txtDeviceModel"
         android:text="@string/nd" />
-    
-    <TextView
-        android:id="@+id/labelBackupStatus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/labelApiStatus"
-        android:layout_below="@+id/labelApiStatus"
-        android:text="@string/backup_status" />
 
-    <TextView
-        android:id="@+id/txtBackupStatus"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/txtApiStatus"
-        android:layout_below="@+id/txtApiStatus"
-        android:text="@string/nd" />
-    
-    <TextView
+  <TextView
         android:id="@+id/labelLog"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/labelBackupStatus"
-        android:layout_below="@+id/labelBackupStatus"
-        android:text="@string/log" />
+      android:text="@string/log"
+      android:layout_alignLeft="@+id/labelApiStatus"
+      android:layout_below="@+id/labelApiStatus" />
 
     <TextView
         android:id="@+id/txtDeviceModel"
