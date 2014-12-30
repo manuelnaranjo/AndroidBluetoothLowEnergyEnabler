@@ -138,12 +138,6 @@ public class StatusActivity extends Activity implements InstallerListener {
       return getResources().getString(R.string.root_required);
     }
 
-    if (!RootTools.isBusyboxAvailable()){
-      logInfo("Busybox not available");
-      RootTools.offerBusyBox(this, RESULT_BUSYBOX);
-      return getResources().getString(R.string.busybox_required);
-    }
-
     logInfo("Root ready");
     mRootReady = true;
     return getResources().getString(R.string.system_ok);
@@ -152,6 +146,20 @@ public class StatusActivity extends Activity implements InstallerListener {
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+
+    mFilesPath = "/data/data/" + this.getPackageName() + "/files/";
+    mBusyBox = mFilesPath + "xbin/busybox";
+
+    for (String path: DIRECTORIES) {
+      copyFileOrDir(path);
+    }
+
+    try {
+      Runtime.getRuntime().exec("/system/bin/chmod 700 " + mBusyBox);
+    } catch (IOException e) {
+      Log.e(TAG, "Failed doing chmod", e);
+    }
+
     setContentView(R.layout.activity_status);
 
     mTxtDeviceBoard = (TextView) this.findViewById(R.id.txtDeviceModel);
@@ -291,113 +299,120 @@ public class StatusActivity extends Activity implements InstallerListener {
     new AlertDialog.Builder(this).setMessage(message)
       .setTitle(title)
       .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
-          public void onClick(DialogInterface dialog, int which) {
-            l.actionYes();
-          }
-        })
+        public void onClick(DialogInterface dialog, int which) {
+          l.actionYes();
+        }
+      })
       .setNegativeButton("No", new DialogInterface.OnClickListener() {
-          public void onClick(DialogInterface dialog, int which) {
-            l.actionNo();
-          }
-        })
+        public void onClick(DialogInterface dialog, int which) {
+          l.actionNo();
+        }
+      })
       .show();
   }
 
-  yesNoListener rebootListener = new yesNoListener () {
-      public void actionYes(){
-        Command c;
-        try {
-          c = RootTools.getShell(true).add(new CommandCapture(0, "reboot"));
-          c.exitCode();
-          return;
-        } catch (Exception e) {
-          Log.e(TAG, "reboot error", e);
-        }
-
-        Toast.makeText(getApplicationContext(),
-                       "Reboot failed, you need to manually reboot",
-                       Toast.LENGTH_LONG).show();
-
+  yesNoListener rebootListener = new yesNoListener() {
+    public void actionYes() {
+      Command c;
+      try {
+        c = RootTools.getShell(true).add(new CommandCapture(0, "reboot"));
+        c.exitCode();
+        return;
+      } catch (Exception e) {
+        Log.e(TAG, "reboot error", e);
       }
 
-      public void actionNo(){
-        Toast.makeText(getApplicationContext(),
-                       "Reboot needed before you can use this activity again",
-                       Toast.LENGTH_LONG).show();
-        finish();
-      }
-    };
+      Toast.makeText(getApplicationContext(),
+        "Reboot failed, you need to manually reboot",
+        Toast.LENGTH_LONG).show();
+
+    }
+
+    public void actionNo() {
+      Toast.makeText(getApplicationContext(),
+        "Reboot needed before you can use this activity again",
+        Toast.LENGTH_LONG).show();
+      finish();
+    }
+  };
 
   @Override
-  public void reboot(){
+  public void reboot() {
     this.runOnUiThread(new Runnable() {
-        @Override
-        public void run() {
-          yesNoAlert("Reboot device?",
-                     "You need to reboot your device to complete this action",
-                     rebootListener);
-        }
-      });
+      @Override
+      public void run() {
+        yesNoAlert("Reboot device?",
+          "You need to reboot your device to complete this action",
+          rebootListener);
+      }
+    });
   }
 
-	@Override
-	public File getBackupDir() {
-		return mBackupDir;
-	}
+  @Override
+  public File getBackupDir() {
+    return mBackupDir;
+  }
 
-	@Override
-	public InputStream getTargetFile(String path) {
-		path = mBOARD + "/" + path;
-		try {
-			return getAssets().open(path);
-		} catch (IOException e) {
-			logError("Failed getting asset " + path );
-		}
-		return null;
-	}
+  @Override
+  public InputStream getTargetFile(String path) {
+    path = mBOARD + "/" + path;
+    try {
+      return getAssets().open(path);
+    } catch (IOException e) {
+      logError("Failed getting asset " + path);
+    }
+    return null;
+  }
 
-  private boolean unpackZip(InputStream is, String path)
-  {
-    ZipInputStream zis;
-    try
-    {
-      String filename;
-      zis = new ZipInputStream(new BufferedInputStream(is));
-      ZipEntry ze;
-      byte[] buffer = new byte[1024];
-      int count;
-
-      while ((ze = zis.getNextEntry()) != null)
-      {
-        filename = ze.getName();
-
-        // Need to create directories if not exists, or
-        // it will generate an Exception...
-        if (ze.isDirectory()) {
-          File fmd = new File(path + filename);
-          fmd.mkdirs();
-          continue;
+  private void copyFileOrDir(String path) {
+    String assets[] = null;
+    Log.v(TAG, "copyFileOrDir " + path);
+    try {
+      assets = getAssets().list(path);
+      if (assets.length == 0) {
+        copyFile(path);
+      } else {
+        String fullPath = mFilesPath + path;
+        File dir = new File(fullPath);
+        if (!dir.exists())
+          dir.mkdir();
+        for (int i = 0; i < assets.length; ++i) {
+          if (path.length() > 0) {
+            copyFileOrDir(path + "/" + assets[i]);
+          } else {
+            copyFileOrDir(assets[i]);
+          }
         }
-
-        FileOutputStream fout = new FileOutputStream(path + filename);
-
-        while ((count = zis.read(buffer)) != -1)
-        {
-          fout.write(buffer, 0, count);
-        }
-
-        fout.close();
-        zis.closeEntry();
       }
-
-      zis.close();
+    } catch (IOException ex) {
+      Log.e(TAG, "I/O Exception", ex);
     }
-    catch(IOException e)
-    {
-      e.printStackTrace();
-      return false;
+  }
+
+  private void copyFile(String filename) {
+    String newFileName = mFilesPath + filename;
+
+    AssetManager assetManager = this.getAssets();
+    Log.v(TAG, "copyFile " + filename);
+    InputStream in = null;
+    OutputStream out = null;
+    try {
+      in = assetManager.open(filename);
+      out = new FileOutputStream(newFileName);
+
+      byte[] buffer = new byte[1024];
+      int read;
+      while ((read = in.read(buffer)) != -1) {
+        out.write(buffer, 0, read);
+      }
+      in.close();
+      in = null;
+      out.flush();
+      out.close();
+      out = null;
+    } catch (Exception e) {
+      Log.e("tag", e.getMessage());
     }
 
-    return true;
   }
 }
