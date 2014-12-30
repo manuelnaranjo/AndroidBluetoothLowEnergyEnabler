@@ -24,6 +24,7 @@ import com.stericson.RootTools.CommandCapture;
 import com.stericson.RootTools.RootTools;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,7 +32,7 @@ import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.List;
 
-public class StatusActivity extends Activity implements InstallerListener {
+public class StatusActivity extends Activity {
   static final String TAG;
   static final String PROGRESS;
   static final String COMPLETE;
@@ -63,11 +64,8 @@ public class StatusActivity extends Activity implements InstallerListener {
   );
 
   private String mBOARD;
-  private TextView mTxtDeviceBoard, mTxtApiStatus,
-    mTxtBackupStatus, mTxtLog;
+  private TextView mTxtDeviceBoard, mTxtApiStatus, mTxtLog;
   private Button mBtnInstall, mBtnUninstall;
-
-  private static final int RESULT_BUSYBOX = 1;
 
   private boolean mCompatible = false;
   private boolean mRootReady = false;
@@ -94,27 +92,7 @@ public class StatusActivity extends Activity implements InstallerListener {
           boolean val = intent.getBooleanExtra(DATA, false);
           Log.v(TAG, intent.getAction() + " " + val);
           if (val) {
-            yesNoAlert("Installation completed", "Do you want to reboot now?",
-              new yesNoListener() {
-                @Override
-                public void actionYes() {
-                  try {
-                    Runtime.getRuntime().exec("/system/bin/reboot");
-                  } catch (IOException e) {
-
-                    Toast.makeText(getApplicationContext(),
-                      "Failed rebooting",
-                      Toast.LENGTH_LONG).show();
-
-                    Log.e(TAG, "Failed to reboot", e);
-                  }
-                }
-
-                @Override
-                public void actionNo() {
-                  mBtnUninstall.setEnabled(true);
-                }
-              });
+            reboot();
           }
         }
 
@@ -142,24 +120,6 @@ public class StatusActivity extends Activity implements InstallerListener {
   public void logError(String t, Exception e) {
     Log.e(TAG, t, e);
     addToLog("E: " + t);
-  }
-
-  @Override
-  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    if (requestCode == RESULT_BUSYBOX) {
-      logVerbose("Got result from busybox installation " + resultCode);
-      if (resultCode == RESULT_OK) {
-        logVerbose("Busybox was installed");
-        updateValues();
-      } else {
-        logError("Failed to install busybox");
-        Toast.makeText(getApplicationContext(),
-          getResources().getString(R.string.busybox_required),
-          Toast.LENGTH_LONG).show();
-      }
-      return;
-    }
-    super.onActivityResult(requestCode, resultCode, data);
   }
 
   public String testRoot() {
@@ -190,6 +150,16 @@ public class StatusActivity extends Activity implements InstallerListener {
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
+    FileOutputStream outputStream = null;
+    try {
+      outputStream = getApplicationContext().openFileOutput("createme",
+        Context.MODE_PRIVATE);
+      outputStream.write("Some text".getBytes());
+      outputStream.close();
+    } catch (Exception e) {
+      Log.i(TAG, "failed creating test file");
+    }
+
     mFilesPath = "/data/data/" + this.getPackageName() + "/files/";
     mBusyBox = mFilesPath + "xbin/busybox";
 
@@ -207,7 +177,6 @@ public class StatusActivity extends Activity implements InstallerListener {
 
     mTxtDeviceBoard = (TextView) this.findViewById(R.id.txtDeviceModel);
     mTxtApiStatus = (TextView) this.findViewById(R.id.txtApiStatus);
-    mTxtBackupStatus = (TextView) this.findViewById(R.id.txtBackupStatus);
     mTxtLog = (TextView) this.findViewById(R.id.txtLog);
     mTxtLog.setText("");
 
@@ -219,6 +188,17 @@ public class StatusActivity extends Activity implements InstallerListener {
       public void onClick(View v) {
         addToLog("Starting installation");
         mBtnInstall.setEnabled(false);
+        mBtnUninstall.setEnabled(false);
+
+        String command = "/system/xbin/su " + mBusyBox + " ash "
+          + mFilesPath + "install.sh";
+        Log.v(TAG, "Running: " + command);
+        try {
+          Runtime.getRuntime().exec(command);
+        } catch (IOException e) {
+          logError("Failed to start the installation", e);
+        }
+
       }
     });
 
@@ -226,10 +206,17 @@ public class StatusActivity extends Activity implements InstallerListener {
 
       @Override
       public void onClick(View v) {
-        RemoveProcess p = new RemoveProcess(StatusActivity.this);
-        addToLog("Removing installation");
-        p.start();
+        addToLog("Starting uninstalling");
+        mBtnInstall.setEnabled(false);
         mBtnUninstall.setEnabled(false);
+
+        String command = mBusyBox + " ash " + mFilesPath + "/uninstall.sh";
+        Log.v(TAG, "Running: " + command);
+        try {
+          Runtime.getRuntime().exec(command);
+        } catch (IOException e) {
+          logError("Failed to start the installation", e);
+        }
       }
     });
 
@@ -243,7 +230,6 @@ public class StatusActivity extends Activity implements InstallerListener {
     }
 
     mCompatible = true;
-    mBackupDir = new File(getFilesDir(), "backup");
     testRoot();
   }
 
@@ -276,21 +262,6 @@ public class StatusActivity extends Activity implements InstallerListener {
 
   public void onConfigurationChanged(Configuration newConfig) {
     super.onConfigurationChanged(newConfig);
-    //setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-  }
-
-  private boolean checkBackupStatus() {
-    boolean r = true;
-
-    for (String f : FILES) {
-      boolean res = new File(mBackupDir, f).exists();
-      logInfo("File " + f + " backup " + (res ? "found" : "not found"));
-      r = res && r;
-    }
-
-    mTxtBackupStatus.setText(r ? R.string.found : R.string.not_found);
-
-    return r;
   }
 
   public void updateValues() {
@@ -298,11 +269,11 @@ public class StatusActivity extends Activity implements InstallerListener {
 
       @Override
       public void run() {
+        clearLog();
         mInstalled = getPackageManager().hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE);
         mTxtApiStatus.setText(mInstalled == true ? R.string.available : R.string.not_installed);
-        boolean backup = checkBackupStatus();
-        mBtnInstall.setEnabled(!mInstalled && mRootReady);
-        mBtnUninstall.setEnabled(mInstalled && mRootReady);
+        mBtnInstall.setEnabled(mRootReady);
+        mBtnUninstall.setEnabled(mRootReady);
       }
     });
 
@@ -314,7 +285,6 @@ public class StatusActivity extends Activity implements InstallerListener {
     return true;
   }
 
-  @Override
   public void clearLog() {
     if (mTxtLog != null)
       this.runOnUiThread(new Runnable() {
@@ -325,7 +295,6 @@ public class StatusActivity extends Activity implements InstallerListener {
       });
   }
 
-  @Override
   public void addToLog(final String t) {
     if (mTxtLog != null)
       this.runOnUiThread(new Runnable() {
@@ -383,7 +352,6 @@ public class StatusActivity extends Activity implements InstallerListener {
     }
   };
 
-  @Override
   public void reboot() {
     this.runOnUiThread(new Runnable() {
       @Override
@@ -393,22 +361,6 @@ public class StatusActivity extends Activity implements InstallerListener {
           rebootListener);
       }
     });
-  }
-
-  @Override
-  public File getBackupDir() {
-    return mBackupDir;
-  }
-
-  @Override
-  public InputStream getTargetFile(String path) {
-    path = mBOARD + "/" + path;
-    try {
-      return getAssets().open(path);
-    } catch (IOException e) {
-      logError("Failed getting asset " + path);
-    }
-    return null;
   }
 
   private void copyFileOrDir(String path) {
