@@ -35,7 +35,15 @@ import com.stericson.RootTools.CommandCapture;
 import com.stericson.RootTools.RootTools;
 
 public class StatusActivity extends Activity implements InstallerListener {
-  static final String TAG = "BTLE-Installer";
+  static final String TAG;
+  static final String INTENT;
+  static final String DATA;
+
+  static {
+    TAG = "BTLE-Installer";
+    INTENT = "com.manuelnaranjo.btle.installer2.PROGRESS";
+    DATA = "data";
+  }
 
   /*
    * List of provided models
@@ -57,6 +65,23 @@ public class StatusActivity extends Activity implements InstallerListener {
   private boolean mCompatible = false;
   private boolean mRootReady = false;
   private boolean mInstalled = false;
+  private Boolean mReceiverRegistered = false;
+
+  private BroadcastReceiver mReceiver;
+
+  {
+    mReceiver = new BroadcastReceiver() {
+      @Override
+      public void onReceive(Context context, Intent intent) {
+        if (!intent.getAction().equals(INTENT)) {
+          return;
+        }
+
+        String line = intent.getStringExtra(DATA);
+        logVerbose(line);
+      }
+    };
+  }
 
   private File mBackupDir;
 
@@ -170,11 +195,26 @@ public class StatusActivity extends Activity implements InstallerListener {
   @Override
   protected void onResume() {
     super.onResume();
-    if (mCompatible)
+    if (mCompatible) {
       updateValues();
+    }
+
+    if (!mReceiverRegistered){
+      registerReceiver(mReceiver,
+        new IntentFilter("com.manuelnaranjo.btle.installer2.PROGRESS"));
+      mReceiverRegistered = true;
+    }
+
   }
 
   @Override
+  protected void onPause() {
+    if (mReceiverRegistered) {
+      unregisterReceiver(mReceiver);
+      mReceiverRegistered = false;
+    }
+  }
+
   public void onConfigurationChanged(Configuration newConfig) {
     super.onConfigurationChanged(newConfig);
     //setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
