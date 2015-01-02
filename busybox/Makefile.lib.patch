@@ -1,0 +1,13 @@
+diff --git a/scripts/Makefile.lib b/scripts/Makefile.lib
+index 3e54ea7..d75fbc3 100644
+--- a/scripts/Makefile.lib
++++ b/scripts/Makefile.lib
+@@ -87,7 +87,7 @@ modname_flags  = $(if $(filter 1,$(words $(modname))),\
+                  -D"KBUILD_MODNAME=KBUILD_STR($(call name-fix,$(modname)))")
+ 
+ _c_flags       = $(CFLAGS) $(EXTRA_CFLAGS) $(CFLAGS_$(*F).o)
+-_a_flags       = $(AFLAGS) $(EXTRA_AFLAGS) $(AFLAGS_$(*F).o)
++_a_flags       = $(AFLAGS) $(EXTRA_AFLAGS) --sysroot $(CONFIG_SYSROOT) $(AFLAGS_$(*F).o)
+ _cpp_flags     = $(CPPFLAGS) $(EXTRA_CPPFLAGS) $(CPPFLAGS_$(@F))
+ 
+ # If building the kernel in a separate objtree expand all occurrences
