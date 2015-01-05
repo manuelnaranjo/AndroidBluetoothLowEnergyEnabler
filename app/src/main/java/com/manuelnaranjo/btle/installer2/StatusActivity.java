@@ -268,7 +268,7 @@ public class StatusActivity extends Activity {
       public void run() {
         if (mRootReady) {
           mBtnInstall.setEnabled(!mInstalled);
-          mBtnUninstall.setEnabled(mInstalled);
+          mBtnUninstall.setEnabled(true);
         } else {
           mBtnInstall.setEnabled(false);
           mBtnUninstall.setEnabled(false);
