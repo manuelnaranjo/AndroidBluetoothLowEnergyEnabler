@@ -167,6 +167,16 @@ public class StatusActivity extends Activity {
     mFilesPath = "/data/data/" + this.getPackageName() + "/files/";
     mBusyBox = mFilesPath + "xbin/busybox";
 
+    File temp = new File(mFilesPath);
+    if ( temp.exists() && temp.list().length > 0) {
+      try {
+        recursiveDelete(temp);
+        Log.e(TAG, "Cleaned up previous install directory");
+      } catch (IOException e) {
+        Log.e(TAG, "Failed to do cleanup", e);
+      }
+    }
+
     for (String path: ASSETS) {
       copyFileOrDir(path);
     }
@@ -215,6 +225,16 @@ public class StatusActivity extends Activity {
 
     mCompatible = true;
     testRoot();
+  }
+
+  void recursiveDelete(File f) throws IOException {
+    if (f.isDirectory()) {
+      for (File c: f.listFiles()) {
+        recursiveDelete(c);
+      }
+    }
+    if (!f.delete())
+      throw new FileNotFoundException("Failed to delete file: " + f);
   }
 
   @Override
