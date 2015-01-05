@@ -1,6 +1,6 @@
 #!/bin/sh -
 
-set -ex
+set -x
 
 DATA="$PWD"
 BUSYBOX="$PWD/files/xbin/busybox"
@@ -40,10 +40,16 @@ trap cleanup EXIT
 
 cd files
 
-# mount /system as RW
-$BUSYBOX mount -rw -o remount /system
+if [ -w /system/ ]; then
+    # mount /system as RW
+    $BUSYBOX mount -rw -o remount /system
 
-broadcastProgress "/system mounted as RW"
+    broadcastProgress "/system mounted as RW"
+else
+    broadcastProgress "/system was mounted as RW, skipping step"
+fi
+
+set -e
 
 broadcastProgress "Doing installation on a $BOARD device"
 
@@ -70,9 +76,10 @@ fi
 
 $BUSYBOX sync
 
+set +e
 # remount as ro
-# $BUSYBOX mount -r -o remount /system
-# broadcastProgress "/system mounted as RO"
+$BUSYBOX mount -r -o remount /system
+broadcastProgress "/system mounted as RO"
 
 broadcastProgress "Completed installation"
 
