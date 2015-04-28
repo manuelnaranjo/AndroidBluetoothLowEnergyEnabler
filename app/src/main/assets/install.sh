@@ -69,6 +69,15 @@ else
     cd ble-4.0
 fi
 
+# first remove original files
+for i in `$BUSYBOX find -type f`; do
+    TARGETDIR="/system/$($BUSYBOX dirname ${i})/"
+    FILE="$($BUSYBOX basename ${i})"
+    broadcastProgress "Removing $TARGETDIR/$FILE"
+    ${BUSYBOX} rm -f ${TARGETDIR}/${FILE}
+done
+
+# now handle the installation per se
 for i in `$BUSYBOX find -type f`; do
     TARGETDIR="/system/$($BUSYBOX dirname ${i})/"
     FILE="$($BUSYBOX basename ${i})"
