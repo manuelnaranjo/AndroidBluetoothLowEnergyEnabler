@@ -3,9 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/AndroidBluetoothLowEnergyEnabler.iml" filepath="$PROJECT_DIR$/AndroidBluetoothLowEnergyEnabler.iml" />
-      <module fileurl="file://$PROJECT_DIR$/AndroidBluetoothLowEnergyEnabler.gradle.iml" filepath="$PROJECT_DIR$/AndroidBluetoothLowEnergyEnabler.gradle.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>
 </project>
-
