@@ -11,6 +11,22 @@ binaries.
 
 # Building instructions
 
+1 - Init repo as AOSP instructions says
+2 - Copy mnaranjo.xml and busybox.xml into <AOSP>/.repo/local_manifests.xml
+3 - Run:
+
+    $ repo sync
+
+4 - Merge projects listed in mnaranjo.xml with upstream ones
+5 - Run:
+
+    $ source build/envsetup.sh
+    $ launch aosp_<model>-userdebug
+    $ make busybox bluetooth.default -j 4
+    <copy files into app/src/main/assets/ >
+
+# Old instructions
+
 ## BusyBox
 
 You need to build busybox in order to get the installer working, once build you
@@ -27,12 +43,14 @@ should update app/src/main/assets/xbin/busybox, instructions for building are:
 ## AOSP part
 
 Short instructions on how to build the binaries
-    
+
     source build/envsetup.sh
     lunch aosp_<model>-userdebug
     modify devices/<maker>/<model>/bluetooth/bluedroid_builcfg.h
     make bluetooth.default -j 4
     <copy files>
+
+# Packing
 
 ## Debug APK
 
@@ -41,14 +59,14 @@ Short instructions on how to build the binaries
 
 ## Release APK
 
-Once you got the debug version tested and running you need to create 
+Once you got the debug version tested and running you need to create
 app/btle.properties with the following structure:
-    
+
     keystore=<path to your keystore>
     keystore.password=<keystore password>
     keystore.alias=<keystore alias>
     key.password=<password for the key to use>
-    
+
 Then you can build the release ready apk with
 
     ./gradlew assembleRelease

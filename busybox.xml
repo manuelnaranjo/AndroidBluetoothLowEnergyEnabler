@@ -1,0 +1,8 @@
+<manifest>
+    <!-- add github as a remote source -->
+    <remote name="github" fetch="git://github.com" />
+
+    <!-- add busybox from the cyanogenmod repository -->
+    <project path="external/busybox" name="CyanogenMod/android_external_busybox" remote="github" revision="cm-12.0" />
+
+</manifest>

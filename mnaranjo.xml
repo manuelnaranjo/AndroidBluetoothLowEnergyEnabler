@@ -1,0 +1,13 @@
+<manifest>
+    <!-- add github as a remote source -->
+    <remote name="github" fetch="git://github.com" />
+
+    <!-- replace grouper and mantaray with my branch -->
+    <!--
+    <remove-project name="device/asus/grouper" />
+    <remove-project name="device/samsung/manta" />
+    <project path="device/asus/grouper" name="manuelnaranjo/device_asus_grouper" groups="device,grouper" revision="mnaranjo" />
+    <project path="device/samsung/manta" name="manuelnaranjo/device_samsung_manta" groups="device,manta" revision="mnaranjo" />
+    -->
+    
+</manifest>
