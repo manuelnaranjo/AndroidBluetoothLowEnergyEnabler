@@ -25,6 +25,27 @@ binaries.
     $ make busybox bluetooth.default -j 4
     <copy files into app/src/main/assets/ >
 
+# Packing
+
+## Debug APK
+
+    <update AndroidManifest.xml>
+    ./gradlew assembleDebug
+
+## Release APK
+
+Once you got the debug version tested and running you need to create
+app/btle.properties with the following structure:
+
+    keystore=<path to your keystore>
+    keystore.password=<keystore password>
+    keystore.alias=<keystore alias>
+    key.password=<password for the key to use>
+
+Then you can build the release ready apk with
+
+    ./gradlew assembleRelease
+
 # Old instructions
 
 ## BusyBox
@@ -49,24 +70,3 @@ Short instructions on how to build the binaries
     modify devices/<maker>/<model>/bluetooth/bluedroid_builcfg.h
     make bluetooth.default -j 4
     <copy files>
-
-# Packing
-
-## Debug APK
-
-    <update AndroidManifest.xml>
-    ./gradlew assembleDebug
-
-## Release APK
-
-Once you got the debug version tested and running you need to create
-app/btle.properties with the following structure:
-
-    keystore=<path to your keystore>
-    keystore.password=<keystore password>
-    keystore.alias=<keystore alias>
-    key.password=<password for the key to use>
-
-Then you can build the release ready apk with
-
-    ./gradlew assembleRelease
