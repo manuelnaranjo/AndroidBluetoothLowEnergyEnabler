@@ -47,7 +47,7 @@ cd files
 
 if [ -w /system/ ]; then
     # mount /system as RW
-    mount -rw -o remount /system
+    mount -w -o remount /system
 
     broadcastProgress "/system mounted as RW"
 else

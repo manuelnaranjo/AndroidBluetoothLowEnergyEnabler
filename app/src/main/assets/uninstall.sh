@@ -42,7 +42,7 @@ cd files
 
 if [ -w /system/ ]; then
     # mount /system as RW
-    $BUSYBOX mount -rw -o remount /system
+    $BUSYBOX mount -w -o remount /system
 
     broadcastProgress "/system mounted as RW"
 else
