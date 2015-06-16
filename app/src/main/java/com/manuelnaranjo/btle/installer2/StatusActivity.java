@@ -2,6 +2,7 @@ package com.manuelnaranjo.btle.installer2;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -456,6 +457,7 @@ public class StatusActivity extends Activity {
   }
 
   private void handleInstall() {
+    disableBluetooth();
 
     addToLog("Extracting assets");
 
@@ -483,7 +485,25 @@ public class StatusActivity extends Activity {
 
   }
 
+  private void disableBluetooth() {
+
+    try {
+      BluetoothAdapter mAdapter = BluetoothAdapter.getDefaultAdapter();
+      if (mAdapter.isEnabled()) {
+        addToLog("Disabling Bluetooth before continuing");
+        mAdapter.disable();
+        while (mAdapter.isEnabled()) {
+          Thread.sleep(10);
+        }
+      }
+    } catch (Exception e) {
+      logError("Failed disabling bluetooth", e);
+    }
+
+  }
+
   private void handleUninstall() {
+    disableBluetooth();
 
     addToLog("Extracting assets");
 
