@@ -84,7 +84,7 @@ for i in `$BUSYBOX find -type f`; do
     broadcastProgress "Installing ${i} $TARGETDIR/$FILE"
     $BUSYBOX cp ${i} ${TARGETDIR}
     broadcastProgress "Setting proper permissions"
-    chmod 755 ${TARGETDIR}/${FILE}
+    chmod 644 ${TARGETDIR}/${FILE}
 done
 
 # get out now
