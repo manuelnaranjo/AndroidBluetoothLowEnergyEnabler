@@ -74,7 +74,9 @@ for i in `$BUSYBOX find -type f`; do
     TARGETDIR="/system/$($BUSYBOX dirname ${i})/"
     FILE="$($BUSYBOX basename ${i})"
     broadcastProgress "Removing $TARGETDIR/$FILE"
-    ${BUSYBOX} rm -f ${TARGETDIR}/${FILE}
+    if [ -f ${TARGETDIR}/${FILE} ]; then
+      ${BUSYBOX} rm -f ${TARGETDIR}/${FILE}
+    fi
 done
 
 # now handle the installation per se
