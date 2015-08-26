@@ -11,19 +11,18 @@ binaries.
 
 # Building instructions
 
-1 - Init repo as AOSP instructions says
-2 - Copy mnaranjo.xml and busybox.xml into <AOSP>/.repo/local_manifests.xml
-3 - Run:
+1. Init repo as AOSP instructions says
+2. Copy `mnaranjo.xml` and `busybox.xml` into `<AOSP>/.repo/local_manifests.xml`
+3. Run:
 
-    $ repo sync
+        $ repo sync
+4. Merge projects listed in `mnaranjo.xml` with upstream ones
+5. Run:
 
-4 - Merge projects listed in mnaranjo.xml with upstream ones
-5 - Run:
-
-    $ source build/envsetup.sh
-    $ launch aosp_<model>-userdebug
-    $ make busybox bluetooth.default -j 4
-    <copy files into app/src/main/assets/ >
+        $ source build/envsetup.sh
+        $ launch aosp_<model>-userdebug
+        $ make busybox bluetooth.default -j 4
+        <copy files into app/src/main/assets/ >
 
 # Packing
 
