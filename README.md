@@ -1,3 +1,6 @@
+*NOTE:* The application is not been sold anymore. If you need it write me an email and I send you the apk, the project is now abandoned, and kept here just for reference
+
+
 # Introduction
 
 Bluetooth Low Energy Enabler for Nexus 7 and 10 installer
