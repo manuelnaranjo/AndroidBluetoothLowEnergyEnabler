@@ -1,4 +1,6 @@
-*NOTE:* The application is not been sold anymore. If you need it write me an email and I send you the apk, the project is now abandoned, and kept here just for reference
+*NOTE:* The application is not been sold anymore. If you need the APK you can get it from [1], the project is kept for reference only.
+
+[1] https://drive.google.com/file/d/0B4M7Wpkm0GA4YjZrQkpBTlVCMnJOb3ZtYllOSW9hQlBNXzFz/view
 
 
 # Introduction
